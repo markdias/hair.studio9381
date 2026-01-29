@@ -162,6 +162,130 @@ const Services = () => {
     );
 };
 
+const PriceList = () => {
+    const categories = [
+        {
+            title: "CUT & STYLING",
+            items: [
+                { name: "Wash cut & blowdry", price: "£50" },
+                { name: "Wash & cut", price: "£30-£35" },
+                { name: "Wash & blowdry", price: "£25-35" },
+                { name: "Styling (flat iron/curls)", price: "£20" },
+                { name: "Hair Up", price: "From £60" }
+            ]
+        },
+        {
+            title: "COLOURING",
+            items: [
+                { name: "T-section highlights", price: "£50" },
+                { name: "Half head highlights", price: "£75" },
+                { name: "Full head highlights", price: "£95" },
+                { name: "Full head of baby lights", price: "£120" },
+                { name: "Balyage", price: "£180-£225" },
+                { name: "Full head tint", price: "From £70" },
+                { name: "Root tint", price: "From £50" },
+                { name: "Toner", price: "£25" }
+            ]
+        },
+        {
+            title: "HAIR TREATMENTS",
+            items: [
+                { name: "Keratin blowdry", price: "£140-£150" },
+                { name: "Hair Botox", price: "£35" },
+                { name: "Olaplex", price: "£25" }
+            ]
+        },
+        {
+            title: "HAIR EXTENSIONS",
+            items: [
+                { name: "Hair extensions on consultation", price: "£0" },
+                { name: "Extensions maintenance", price: "£100-150" }
+            ]
+        },
+        {
+            title: "MAKE UP",
+            items: [
+                { name: "Natural make up", price: "£55" },
+                { name: "Full glam make up", price: "£65" },
+                { name: "Wedding make up packages available", price: "" }
+            ]
+        }
+    ];
+
+    return (
+        <section id="pricing" style={{
+            padding: '120px 50px',
+            backgroundColor: '#F5F1ED',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+        }}>
+            <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1 }}
+                style={{
+                    backgroundColor: '#EDE4DB',
+                    maxWidth: '900px',
+                    width: '100%',
+                    padding: '80px 100px',
+                    boxShadow: '0 20px 50px rgba(0,0,0,0.05)',
+                    position: 'relative'
+                }}
+            >
+                <h2 style={{
+                    fontFamily: "'Great Vibes', cursive",
+                    fontSize: '6rem',
+                    color: '#3D2B1F',
+                    textAlign: 'center',
+                    marginBottom: '60px',
+                    fontWeight: '400',
+                    lineHeight: '1'
+                }}>
+                    Price list
+                </h2>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '60px', position: 'relative' }}>
+                    {/* Vertical Divider */}
+                    <div style={{
+                        position: 'absolute',
+                        top: '0',
+                        right: '180px',
+                        width: '1px',
+                        height: '100%',
+                        backgroundColor: 'rgba(61, 43, 31, 0.2)'
+                    }}></div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '50px' }}>
+                        {categories.map((cat, idx) => (
+                            <div key={idx}>
+                                <h3 style={{
+                                    fontFamily: "'Inter', sans-serif",
+                                    fontSize: '1.4rem',
+                                    fontWeight: '700',
+                                    color: '#3D2B1F',
+                                    letterSpacing: '2px',
+                                    marginBottom: '20px'
+                                }}>
+                                    {cat.title}
+                                </h3>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    {cat.items.map((item, i) => (
+                                        <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 150px', alignItems: 'baseline' }}>
+                                            <span style={{ fontSize: '1.05rem', color: '#3D2B1F', opacity: 0.8 }}>{item.name}</span>
+                                            <span style={{ fontSize: '1.05rem', color: '#3D2B1F', fontWeight: '600', textAlign: 'right' }}>{item.price}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </motion.div>
+        </section>
+    );
+};
+
 const Footer = () => {
     return (
         <footer style={{ padding: '80px 50px', backgroundColor: '#3D2B1F', color: '#EAE0D5' }}>
@@ -194,4 +318,4 @@ const Footer = () => {
     );
 };
 
-export { Navbar, Hero, Services, Footer };
+export { Navbar, Hero, Services, PriceList, Footer };

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import IntroVideo from './components/IntroVideo'
-import { Navbar, Hero, Services, Footer } from './components/LandingPage'
+import { Navbar, Hero, Services, PriceList, Footer } from './components/LandingPage'
 import './App.css'
 
 function App() {
@@ -24,6 +24,7 @@ function App() {
           <Navbar />
           <Hero />
           <Services />
+          <PriceList />
           <section id="gallery" style={{ padding: '80px 0' }}>
             <div style={{ textAlign: 'center', marginBottom: '60px' }}>
               <h2 style={{ fontSize: '3rem', color: '#3D2B1F' }}>Instagram Vibes</h2>
