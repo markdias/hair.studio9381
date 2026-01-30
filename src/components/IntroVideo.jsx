@@ -65,20 +65,32 @@ const IntroVideo = ({ onComplete }) => {
             <source src={videoSource} type="video/mp4" />
           </video>
 
+          {/* Logo Overlay */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5, duration: 1.5 }}
             style={{
               position: 'absolute',
               textAlign: 'center',
-              color: '#EAE0D5',
               pointerEvents: 'none',
-              textShadow: '0 4px 12px rgba(0,0,0,0.5)'
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '20px'
             }}
           >
-            <h1 style={{ fontSize: '6rem', fontWeight: 'bold', margin: 0 }}>938</h1>
-            <p style={{ fontSize: '1.4rem', letterSpacing: '12px', textTransform: 'uppercase', margin: 0 }}>Hair Studio</p>
+            <img
+              src="/logo.png"
+              alt="938 Logo"
+              style={{
+                width: '350px',
+                height: '350px',
+                borderRadius: '50%',
+                boxShadow: '0 0 50px rgba(0,0,0,0.5)',
+                border: '3px solid rgba(234, 224, 213, 0.4)'
+              }}
+            />
           </motion.div>
 
           <motion.button

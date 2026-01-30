@@ -30,29 +30,29 @@ const Navbar = () => {
             color: isScrolled ? '#EAE0D5' : '#FFFFFF',
             boxSizing: 'border-box'
         }}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-                <div style={{
-                    fontSize: '1.8rem',
-                    fontWeight: 'bold',
-                    letterSpacing: '2px',
-                    fontFamily: 'Playfair Display, serif'
-                }}>
-                    938 <span style={{ fontWeight: '300', fontSize: '1rem', letterSpacing: '4px', textTransform: 'uppercase' }}>Studio</span>
-                </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <img
+                    src="/logo.png"
+                    alt="938 Logo"
+                    style={{ height: '85px', width: '85px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(234, 224, 213, 0.2)' }}
+                />
             </div>
 
             <div style={{ display: 'flex', gap: '40px', alignItems: 'center', textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '1px', fontWeight: '500' }}>
                 <a href="#home">Home</a>
                 <a href="#services">Services</a>
+                <a href="#team">Team</a>
+                <a href="#pricing">Pricing</a>
                 <a href="#gallery">Gallery</a>
                 <a href="#contact">Contact</a>
-                <button className="btn-primary" style={{
+                <a href="#booking" className="btn-primary" style={{
                     padding: '10px 24px',
                     backgroundColor: isScrolled ? '#EAE0D5' : '#3D2B1F',
                     color: isScrolled ? '#3D2B1F' : '#EAE0D5',
+                    textDecoration: 'none'
                 }}>
                     Book Now
-                </button>
+                </a>
             </div>
         </nav>
     );
@@ -99,18 +99,19 @@ const Hero = () => {
                     Luxury hair styling and bespoke treatments at 938 High Road.
                 </p>
                 <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
-                    <button className="btn-primary">Our Services</button>
-                    <button style={{
+                    <a href="#booking" className="btn-primary" style={{ textDecoration: 'none' }}>Book Now</a>
+                    <a href="#services" style={{
                         border: '1px solid #FFFFFF',
                         color: '#FFFFFF',
                         padding: '12px 32px',
                         borderRadius: '4px',
                         textTransform: 'uppercase',
                         letterSpacing: '1px',
-                        fontWeight: '600'
+                        fontWeight: '600',
+                        textDecoration: 'none'
                     }}>
-                        Follow Us
-                    </button>
+                        Our Services
+                    </a>
                 </div>
             </motion.div>
         </section>
@@ -155,6 +156,59 @@ const Services = () => {
                         </div>
                         <h3 style={{ fontSize: '1.8rem', marginBottom: '15px', color: '#3D2B1F' }}>{service.title}</h3>
                         <p style={{ color: '#666', lineHeight: '1.8' }}>{service.desc}</p>
+                    </motion.div>
+                ))}
+            </div>
+        </section>
+    );
+};
+
+const TeamSection = () => {
+    const team = [
+        { name: "Jo", role: "Owner & Creative Director", desc: "Expert in bespoke coloring and luxury extensions.", img: "/jo.png" },
+        { name: "Viktor", role: "Master Stylist", desc: "Specializing in precision cuts and seamless balayage.", img: "/viktor.png" },
+        { name: "Nisha", role: "Senior Stylist", desc: "Crafting glam transformations and signature styles.", img: "/nisha.png" }
+    ];
+
+    return (
+        <section id="team" style={{ padding: '120px 50px', backgroundColor: '#F5F1ED' }}>
+            <div style={{ textAlign: 'center', marginBottom: '80px' }}>
+                <h2 style={{ fontSize: '3rem', color: '#3D2B1F', marginBottom: '15px' }}>Meet the Dream Team</h2>
+                <div style={{ width: '60px', height: '2px', backgroundColor: '#3D2B1F', margin: '0 auto' }}></div>
+            </div>
+
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gap: '80px',
+                maxWidth: '1200px',
+                margin: '0 auto'
+            }}>
+                {team.map((member, index) => (
+                    <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.2 }}
+                        style={{ textAlign: 'center' }}
+                    >
+                        <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            style={{
+                                width: '280px',
+                                height: '280px',
+                                borderRadius: '50%',
+                                overflow: 'hidden',
+                                margin: '0 auto 30px',
+                                border: '12px solid #FFFFFF',
+                                boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+                            }}
+                        >
+                            <img src={member.img} alt={member.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </motion.div>
+                        <h3 style={{ fontSize: '2rem', color: '#3D2B1F', marginBottom: '5px' }}>{member.name}</h3>
+                        <p style={{ color: '#3D2B1F', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '3px', fontSize: '0.85rem', marginBottom: '20px', opacity: 0.8 }}>{member.role}</p>
+                        <p style={{ color: '#666', lineHeight: '1.8', maxWidth: '320px', margin: '0 auto', fontSize: '1.05rem' }}>{member.desc}</p>
                     </motion.div>
                 ))}
             </div>
@@ -215,7 +269,7 @@ const PriceList = () => {
     return (
         <section id="pricing" style={{
             padding: '120px 50px',
-            backgroundColor: '#F5F1ED',
+            backgroundColor: '#FFFFFF',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center'
@@ -246,7 +300,6 @@ const PriceList = () => {
                 </h2>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '60px', position: 'relative' }}>
-                    {/* Vertical Divider */}
                     <div style={{
                         position: 'absolute',
                         top: '0',
@@ -286,12 +339,46 @@ const PriceList = () => {
     );
 };
 
+const BookingSection = () => {
+    return (
+        <section id="booking" style={{
+            padding: '120px 50px',
+            backgroundColor: '#3D2B1F',
+            color: '#EAE0D5',
+            textAlign: 'center'
+        }}>
+            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                <h2 style={{ fontSize: '3.5rem', marginBottom: '30px', color: '#FFF' }}>Ready for Your Transformation?</h2>
+                <p style={{ fontSize: '1.2rem', marginBottom: '50px', opacity: 0.9, lineHeight: '1.8' }}>
+                    Join us at Hair Studio 938 for a luxury experience tailored to you. Whether it's a fresh cut, a bold color change, or a complete makeover, our experts are ready to make your hair dreams come true.
+                </p>
+                <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <a href="https://www.instagram.com/hair.studio938/" target="_blank" className="btn-primary" style={{ backgroundColor: '#EAE0D5', color: '#3D2B1F', padding: '16px 40px', fontSize: '1.1rem' }}>
+                        Book via Instagram DM
+                    </a>
+                    <a href="tel:+442084451234" className="btn-primary" style={{ border: '1px solid #EAE0D5', backgroundColor: 'transparent', padding: '16px 40px', fontSize: '1.1rem' }}>
+                        Call the Salon
+                    </a>
+                </div>
+                <p style={{ marginTop: '40px', opacity: 0.7, fontSize: '0.9rem' }}>
+                    <MapPin size={16} style={{ verticalAlign: 'middle', marginRight: '8px' }} />
+                    938 High Road, London, N12 9RT
+                </p>
+            </div>
+        </section>
+    );
+};
+
 const Footer = () => {
     return (
         <footer style={{ padding: '80px 50px', backgroundColor: '#3D2B1F', color: '#EAE0D5' }}>
             <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '60px' }}>
                 <div>
-                    <h2 style={{ fontSize: '2rem', marginBottom: '20px' }}>938</h2>
+                    <img
+                        src="/logo.png"
+                        alt="938 Logo"
+                        style={{ height: '140px', width: '140px', borderRadius: '50%', marginBottom: '25px', objectFit: 'cover', border: '1px solid rgba(234, 224, 213, 0.2)' }}
+                    />
                     <p style={{ opacity: 0.8, lineHeight: '1.8' }}>Where Hair Dreams Come True! Follow us for fabulous hair moments!</p>
                     <div style={{ display: 'flex', gap: '20px', marginTop: '30px' }}>
                         <a href="https://www.instagram.com/hair.studio938/" target="_blank">
@@ -318,4 +405,4 @@ const Footer = () => {
     );
 };
 
-export { Navbar, Hero, Services, PriceList, Footer };
+export { Navbar, Hero, Services, TeamSection, PriceList, BookingSection, Footer };
