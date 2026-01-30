@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Save, LogOut, Check, Info, Loader2,
     Settings, Scissors, Tag, Image, Plus, Trash2,
-    MapPin, Phone, Mail, Clock, User
+    MapPin, Phone, Mail, Clock, User, Calendar, Edit, X
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -20,6 +20,7 @@ const AdminDashboard = () => {
     const [pricing, setPricing] = useState([]);
     const [stylists, setStylists] = useState([]);
     const [gallery, setGallery] = useState([]);
+    const [appointments, setAppointments] = useState([]);
 
     useEffect(() => {
         fetchAllData();
@@ -85,6 +86,7 @@ const AdminDashboard = () => {
         { id: 'pricing', label: 'Pricing', icon: <Tag size={18} /> },
         { id: 'team', label: 'Team', icon: <User size={18} /> },
         { id: 'gallery', label: 'Gallery', icon: <Image size={18} /> },
+        { id: 'appointments', label: 'Appointments', icon: <Calendar size={18} /> },
     ];
 
     return (
@@ -152,8 +154,8 @@ const AdminDashboard = () => {
 
                     <TabContent
                         activeTab={activeTab}
-                        data={{ siteSettings, services, pricing, stylists, gallery }}
-                        setData={{ setSiteSettings, setServices, setPricing, setStylists, setGallery }}
+                        data={{ siteSettings, services, pricing, stylists, gallery, appointments }}
+                        setData={{ setSiteSettings, setServices, setPricing, setStylists, setGallery, setAppointments }}
                         refresh={fetchAllData}
                         showMessage={showMessage}
                     />
@@ -170,6 +172,7 @@ const TabContent = ({ activeTab, data, setData, refresh, showMessage }) => {
         case 'pricing': return <PricingTab pricing={data.pricing} refresh={refresh} showMessage={showMessage} />;
         case 'team': return <TeamTab stylists={data.stylists} refresh={refresh} showMessage={showMessage} />;
         case 'gallery': return <GalleryTab gallery={data.gallery} refresh={refresh} showMessage={showMessage} />;
+        case 'appointments': return <AppointmentsTab appointments={data.appointments} setAppointments={setData.setAppointments} showMessage={showMessage} />;
         default: return null;
     }
 };
@@ -702,6 +705,357 @@ const GalleryTab = ({ gallery, refresh, showMessage }) => {
                 ))}
             </div>
         </motion.div>
+    );
+};
+
+const AppointmentsTab = ({ appointments, setAppointments, showMessage }) => {
+    const [loading, setLoading] = useState(false);
+    const [editingAppt, setEditingAppt] = useState(null);
+    const [filterStylist, setFilterStylist] = useState('all');
+    const [searchQuery, setSearchQuery] = useState('');
+
+    useEffect(() => {
+        fetchAppointments();
+    }, []);
+
+    const fetchAppointments = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/appointments/list');
+            const data = await response.json();
+            if (data.appointments) {
+                setAppointments(data.appointments);
+            }
+        } catch (err) {
+            showMessage('error', 'Failed to load appointments');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDelete = async (appt) => {
+        if (!confirm(`Delete appointment for ${appt.customer.name}?`)) return;
+
+        try {
+            const response = await fetch('/api/appointments/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ eventId: appt.id, calendarId: appt.calendarId })
+            });
+
+            if (response.ok) {
+                showMessage('success', 'Appointment deleted');
+                fetchAppointments();
+            } else {
+                throw new Error('Delete failed');
+            }
+        } catch (err) {
+            showMessage('error', 'Failed to delete appointment');
+        }
+    };
+
+    const handleUpdate = async (updatedData) => {
+        try {
+            const response = await fetch('/api/appointments/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    eventId: editingAppt.id,
+                    calendarId: editingAppt.calendarId,
+                    updates: updatedData
+                })
+            });
+
+            if (response.ok) {
+                showMessage('success', 'Appointment updated');
+                setEditingAppt(null);
+                fetchAppointments();
+            } else {
+                throw new Error('Update failed');
+            }
+        } catch (err) {
+            showMessage('error', 'Failed to update appointment');
+        }
+    };
+
+    const filteredAppointments = appointments.filter(appt => {
+        const matchesStylist = filterStylist === 'all' || appt.stylist === filterStylist;
+        const matchesSearch = !searchQuery ||
+            appt.customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            appt.customer.email.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesStylist && matchesSearch;
+    });
+
+    const stylists = [...new Set(appointments.map(a => a.stylist))];
+
+    const formatDateTime = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleString('en-GB', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    const isToday = (dateString) => {
+        const date = new Date(dateString);
+        const today = new Date();
+        return date.toDateString() === today.toDateString();
+    };
+
+    const isPast = (dateString) => {
+        return new Date(dateString) < new Date();
+    };
+
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-semibold text-gray-900">Appointments</h2>
+                <button
+                    onClick={fetchAppointments}
+                    className="flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all"
+                    style={{ backgroundColor: "#3D2B1F" }}
+                    disabled={loading}
+                >
+                    {loading ? <Loader2 size={18} className="animate-spin" /> : <Calendar size={18} />}
+                    Refresh
+                </button>
+            </div>
+
+            {/* Filters */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Stylist</label>
+                        <select
+                            value={filterStylist}
+                            onChange={(e) => setFilterStylist(e.target.value)}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
+                        >
+                            <option value="all">All Stylists</option>
+                            {stylists.map(s => (
+                                <option key={s} value={s}>{s}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Search Customer</label>
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Name or email..."
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Appointments List */}
+            {loading ? (
+                <div className="flex items-center justify-center py-12">
+                    <Loader2 size={40} className="animate-spin text-stone-800" />
+                </div>
+            ) : filteredAppointments.length === 0 ? (
+                <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+                    <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">No appointments found</p>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {filteredAppointments.map(appt => (
+                        <div key={appt.id} className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-start justify-between">
+                                <div className="flex-grow">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <Clock size={16} className="text-gray-500" />
+                                            <span className="font-semibold text-gray-900">{formatDateTime(appt.startTime)}</span>
+                                        </div>
+                                        {isToday(appt.startTime) && (
+                                            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">Today</span>
+                                        )}
+                                        {isPast(appt.startTime) && !isToday(appt.startTime) && (
+                                            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded">Past</span>
+                                        )}
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                        <div>
+                                            <p className="text-sm text-gray-500">Customer</p>
+                                            <p className="font-medium text-gray-900">{appt.customer.name}</p>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <Mail size={14} className="text-gray-400" />
+                                                <span className="text-sm text-gray-600">{appt.customer.email}</span>
+                                            </div>
+                                            {appt.customer.phone && (
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <Phone size={14} className="text-gray-400" />
+                                                    <span className="text-sm text-gray-600">{appt.customer.phone}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500">Service & Stylist</p>
+                                            <p className="font-medium text-gray-900">{appt.customer.service}</p>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <User size={14} className="text-gray-400" />
+                                                <span className="text-sm text-gray-600">{appt.stylist}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 ml-4">
+                                    <button
+                                        onClick={() => setEditingAppt(appt)}
+                                        className="p-2 text-stone-800 hover:bg-stone-100 rounded-lg transition-all"
+                                        title="Edit"
+                                    >
+                                        <Edit size={18} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(appt)}
+                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                        title="Delete"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Edit Modal */}
+            {editingAppt && (
+                <EditAppointmentModal
+                    appointment={editingAppt}
+                    onClose={() => setEditingAppt(null)}
+                    onSave={handleUpdate}
+                />
+            )}
+        </motion.div>
+    );
+};
+
+const EditAppointmentModal = ({ appointment, onClose, onSave }) => {
+    const [formData, setFormData] = useState({
+        name: appointment.customer.name,
+        email: appointment.customer.email,
+        phone: appointment.customer.phone,
+        service: appointment.customer.service,
+        date: appointment.startTime.split('T')[0],
+        time: appointment.startTime.split('T')[1].substring(0, 5),
+    });
+
+    const handleSubmit = () => {
+        const startDateTime = new Date(`${formData.date}T${formData.time}:00`).toISOString();
+        const endDateTime = new Date(new Date(`${formData.date}T${formData.time}:00`).getTime() + 60 * 60 * 1000).toISOString();
+
+        onSave({
+            customer: {
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone
+            },
+            service: formData.service,
+            startTime: startDateTime,
+            endTime: endDateTime
+        });
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-white rounded-lg shadow-xl max-w-md w-full p-6"
+            >
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-semibold text-gray-900">Edit Appointment</h3>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-all">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                        <input
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <input
+                            type="tel"
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Service</label>
+                        <input
+                            type="text"
+                            value={formData.service}
+                            onChange={(e) => setFormData({ ...formData, service: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                            <input
+                                type="date"
+                                value={formData.date}
+                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                            <input
+                                type="time"
+                                value={formData.time}
+                                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                    <button
+                        onClick={handleSubmit}
+                        className="flex-grow text-white py-2 rounded-lg transition-all"
+                        style={{ backgroundColor: "#3D2B1F" }}
+                    >
+                        Save Changes
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="px-6 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </motion.div>
+        </div>
     );
 };
 
