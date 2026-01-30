@@ -13,56 +13,12 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Check for credentials
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY;
-    const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    const calendarId = process.env.GOOGLE_CALENDAR_ID;
+    // As per user request, we are NOT creating a Google Calendar event.
+    // This endpoint now simply returns a success response to the frontend 
+    // to trigger the confirmation UI. 
 
-    if (!privateKey || !clientEmail || !calendarId) {
-        console.warn('Google Calendar credentials not configured. Simulating success.');
-        return res.status(200).json({
-            success: true,
-            message: 'Simulated booking. Configure credentials in Vercel to sync with Google Calendar.'
-        });
-    }
-
-    try {
-        const auth = new google.auth.JWT(
-            clientEmail,
-            null,
-            privateKey.replace(/\\n/g, '\n'),
-            SCOPES
-        );
-
-        const calendar = google.calendar({ version: 'v3', auth });
-
-        const startDateTime = new Date(`${date}T${time}:00`).toISOString();
-        const endDateTime = new Date(new Date(`${date}T${time}:00`).getTime() + 60 * 60 * 1000).toISOString();
-
-        const event = {
-            summary: `[938] ${service} - ${name}`,
-            description: `Stylist: ${stylist?.name || 'Any'}\nService: ${service}\nPhone: ${phone}\nEmail: ${email}`,
-            start: {
-                dateTime: startDateTime,
-                timeZone: 'Europe/London',
-            },
-            end: {
-                dateTime: endDateTime,
-                timeZone: 'Europe/London',
-            },
-            attendee: [
-                { email: email }
-            ]
-        };
-
-        const response = await calendar.events.insert({
-            calendarId,
-            resource: event,
-        });
-
-        return res.status(200).json({ success: true, eventId: response.data.id });
-    } catch (error) {
-        console.error('Calendar API Error:', error);
-        return res.status(500).json({ error: 'Failed to create booking', details: error.message });
-    }
+    return res.status(200).json({
+        success: true,
+        message: 'Booking received successfully (Calendar sync disabled by choice).'
+    });
 }
