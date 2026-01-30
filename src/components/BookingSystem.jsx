@@ -12,12 +12,15 @@ const categories = [
 const BookingSystem = () => {
     const [stylists, setStylists] = useState([]);
     const [isLoadingStylists, setIsLoadingStylists] = useState(true);
+    const [openingHours, setOpeningHours] = useState(null);
+    const [serviceDurations, setServiceDurations] = useState({});
     const [step, setStep] = useState(1);
     const [booking, setBooking] = useState({
         stylist: null,
         service: null,
         date: null,
         time: null,
+        duration_minutes: null,
         name: '',
         email: '',
         phone: ''
@@ -40,7 +43,34 @@ const BookingSystem = () => {
             }
             setIsLoadingStylists(false);
         };
+
+        const fetchOpeningHours = async () => {
+            const { data, error } = await supabase
+                .from('site_settings')
+                .select('value')
+                .eq('key', 'opening_hours')
+                .single();
+            if (!error && data) {
+                setOpeningHours(data.value);
+            }
+        };
+
+        const fetchServiceDurations = async () => {
+            const { data, error } = await supabase
+                .from('price_list')
+                .select('item_name, duration_minutes');
+            if (!error && data) {
+                const durations = {};
+                data.forEach(s => {
+                    durations[s.item_name] = s.duration_minutes || 60;
+                });
+                setServiceDurations(durations);
+            }
+        };
+
         fetchStylists();
+        fetchOpeningHours();
+        fetchServiceDurations();
     }, []);
 
     const [timeSlots, setTimeSlots] = useState([]);
@@ -51,9 +81,50 @@ const BookingSystem = () => {
 
     useEffect(() => {
         if (booking.date) {
-            fetchAvailability(booking.date, booking.stylist?.name);
+            const isOpen = checkIfOpen(booking.date);
+            if (isOpen) {
+                fetchAvailability(booking.date, booking.stylist?.name);
+            } else {
+                setTimeSlots([]);
+                setError('Sorry, we are closed on this day. Please select another date.');
+            }
         }
-    }, [booking.date, booking.stylist?.name]);
+    }, [booking.date, booking.stylist?.name, openingHours]);
+
+    const checkIfOpen = (dateStr) => {
+        if (!openingHours) return true; // If no hours set, allow booking
+
+        const date = new Date(dateStr + 'T00:00:00');
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const dayName = dayNames[date.getDay()];
+
+        // Parse opening hours to check if this day is open
+        // Format: "Mon-Fri: 9 AM - 6 PM, Sat: 10 AM - 4 PM"
+        const parts = openingHours.split(',').map(p => p.trim());
+
+        for (const part of parts) {
+            const match = part.match(/([A-Za-z\-]+):\s*(.+)/);
+            if (!match) continue;
+
+            const [, dayPart, timePart] = match;
+
+            // Check if this part includes our day
+            if (dayPart.includes('-')) {
+                const [start, end] = dayPart.split('-').map(d => d.trim());
+                const startIdx = dayNames.indexOf(start);
+                const endIdx = dayNames.indexOf(end);
+                const currentIdx = dayNames.indexOf(dayName);
+
+                if (startIdx !== -1 && endIdx !== -1 && currentIdx >= startIdx && currentIdx <= endIdx) {
+                    return true; // Day is in range
+                }
+            } else if (dayPart.includes(dayName)) {
+                return true; // Day matches
+            }
+        }
+
+        return false; // Day not found in opening hours = closed
+    };
 
     const fetchAvailability = async (date, stylistName) => {
         setIsLoadingSlots(true);
@@ -186,7 +257,7 @@ const BookingSystem = () => {
                                     <h3 style={{ fontSize: '2.5rem', color: '#3D2B1F', marginBottom: '15px' }}>Booking Confirmed!</h3>
                                     <p style={{ color: '#666', marginBottom: '40px' }}>We've sent a confirmation email to {booking.email}.</p>
                                     <button
-                                        onClick={() => { setIsSuccess(false); setStep(1); setBooking({ stylist: null, service: null, date: null, time: null, name: '', email: '', phone: '' }); }}
+                                        onClick={() => { setIsSuccess(false); setStep(1); setBooking({ stylist: null, service: null, date: null, time: null, duration_minutes: null, name: '', email: '', phone: '' }); }}
                                         className="btn-primary"
                                     >
                                         Book Another
@@ -239,7 +310,11 @@ const BookingSystem = () => {
                                                             {cat.items.map(item => (
                                                                 <button
                                                                     key={item}
-                                                                    onClick={() => setBooking({ ...booking, service: item })}
+                                                                    onClick={() => setBooking({
+                                                                        ...booking,
+                                                                        service: item,
+                                                                        duration_minutes: serviceDurations[item] || 60
+                                                                    })}
                                                                     style={{
                                                                         padding: '10px 20px',
                                                                         borderRadius: '30px',
@@ -248,10 +323,20 @@ const BookingSystem = () => {
                                                                         color: booking.service === item ? '#FFF' : '#3D2B1F',
                                                                         fontSize: '0.9rem',
                                                                         transition: 'all 0.2s ease',
-                                                                        cursor: 'pointer'
+                                                                        cursor: 'pointer',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        gap: '8px'
                                                                     }}
                                                                 >
                                                                     {item}
+                                                                    {serviceDurations[item] && (
+                                                                        <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>
+                                                                            ({serviceDurations[item] >= 60
+                                                                                ? `${serviceDurations[item] / 60}h`
+                                                                                : `${serviceDurations[item]}m`})
+                                                                        </span>
+                                                                    )}
                                                                 </button>
                                                             ))}
                                                         </div>

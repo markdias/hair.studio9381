@@ -229,6 +229,257 @@ const ImageUploader = ({ onUpload, folder = 'general', showMessage }) => {
     );
 };
 
+// Helper functions for opening hours
+const getTimeLabel = (hour) => {
+    if (hour === 12) return '12 PM';
+    if (hour === 0) return '12 AM';
+    return hour > 12 ? `${hour - 12} PM` : `${hour} AM`;
+};
+
+const formatOpeningHours = (selectedSlots) => {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const hours = Array.from({ length: 13 }, (_, i) => i + 8); // 8 AM to 8 PM
+
+    // Convert grid to time ranges per day
+    const dayRanges = {};
+    days.forEach(day => {
+        const ranges = [];
+        let start = null;
+
+        selectedSlots[day]?.forEach((selected, idx) => {
+            if (selected && start === null) {
+                start = hours[idx];
+            } else if (!selected && start !== null) {
+                ranges.push({ start, end: hours[idx] });
+                start = null;
+            }
+        });
+
+        // Handle case where selection goes to end
+        if (start !== null) {
+            ranges.push({ start, end: hours[hours.length - 1] + 1 });
+        }
+
+        if (ranges.length > 0) {
+            dayRanges[day] = ranges;
+        }
+    });
+
+    // Group consecutive days with identical hours
+    const grouped = [];
+    let currentGroup = null;
+
+    days.forEach(day => {
+        const ranges = dayRanges[day];
+        const rangesStr = ranges ? JSON.stringify(ranges) : null;
+
+        if (currentGroup && currentGroup.rangesStr === rangesStr) {
+            currentGroup.days.push(day);
+        } else {
+            if (currentGroup) {
+                grouped.push(currentGroup);
+            }
+            currentGroup = ranges ? { days: [day], ranges, rangesStr } : null;
+        }
+    });
+
+    if (currentGroup) {
+        grouped.push(currentGroup);
+    }
+
+    // Format to text
+    return grouped.map(group => {
+        const dayStr = group.days.length === 1
+            ? group.days[0]
+            : `${group.days[0]}-${group.days[group.days.length - 1]}`;
+
+        const timeStr = group.ranges.map(r =>
+            `${getTimeLabel(r.start)} - ${getTimeLabel(r.end)}`
+        ).join(', ');
+
+        return `${dayStr}: ${timeStr}`;
+    }).join(', ') || 'Closed';
+};
+
+const parseOpeningHours = (text) => {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const hours = Array.from({ length: 13 }, (_, i) => i + 8);
+    const selectedSlots = {};
+
+    // Initialize all days as closed
+    days.forEach(day => {
+        selectedSlots[day] = new Array(13).fill(false);
+    });
+
+    if (!text || text.toLowerCase() === 'closed') return selectedSlots;
+
+    // Parse text (basic implementation - can be enhanced)
+    // Expected format: "Mon-Fri: 9 AM - 6 PM, Sat: 10 AM - 4 PM"
+    const parts = text.split(',').map(p => p.trim());
+
+    parts.forEach(part => {
+        const match = part.match(/([A-Za-z\-]+):\s*(.+)/);
+        if (!match) return;
+
+        const [, dayPart, timePart] = match;
+        const timeRanges = timePart.split(',').map(t => t.trim());
+
+        // Parse day range
+        let targetDays = [];
+        if (dayPart.includes('-')) {
+            const [start, end] = dayPart.split('-').map(d => d.trim());
+            const startIdx = days.indexOf(start);
+            const endIdx = days.indexOf(end);
+            if (startIdx !== -1 && endIdx !== -1) {
+                for (let i = startIdx; i <= endIdx; i++) {
+                    targetDays.push(days[i]);
+                }
+            }
+        } else {
+            const day = days.find(d => dayPart.includes(d));
+            if (day) targetDays.push(day);
+        }
+
+        // Parse time ranges
+        timeRanges.forEach(timeRange => {
+            const timeMatch = timeRange.match(/(\d+)\s*(AM|PM)\s*-\s*(\d+)\s*(AM|PM)/i);
+            if (!timeMatch) return;
+
+            let [, startHour, startPeriod, endHour, endPeriod] = timeMatch;
+            startHour = parseInt(startHour);
+            endHour = parseInt(endHour);
+
+            // Convert to 24-hour
+            if (startPeriod.toUpperCase() === 'PM' && startHour !== 12) startHour += 12;
+            if (startPeriod.toUpperCase() === 'AM' && startHour === 12) startHour = 0;
+            if (endPeriod.toUpperCase() === 'PM' && endHour !== 12) endHour += 12;
+            if (endPeriod.toUpperCase() === 'AM' && endHour === 12) endHour = 0;
+
+            // Mark slots as selected
+            targetDays.forEach(day => {
+                hours.forEach((hour, idx) => {
+                    if (hour >= startHour && hour < endHour) {
+                        selectedSlots[day][idx] = true;
+                    }
+                });
+            });
+        });
+    });
+
+    return selectedSlots;
+};
+
+// OpeningHoursPicker Component
+const OpeningHoursPicker = ({ initialValue, onSave, showMessage }) => {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const hours = Array.from({ length: 13 }, (_, i) => i + 8); // 8 AM to 8 PM
+
+    const [selectedSlots, setSelectedSlots] = useState(() => parseOpeningHours(initialValue));
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragMode, setDragMode] = useState('select'); // 'select' or 'deselect'
+
+    const handleMouseDown = (day, hourIdx) => {
+        setIsDragging(true);
+        const currentState = selectedSlots[day][hourIdx];
+        setDragMode(currentState ? 'deselect' : 'select');
+        toggleSlot(day, hourIdx);
+    };
+
+    const handleMouseEnter = (day, hourIdx) => {
+        if (isDragging) {
+            toggleSlot(day, hourIdx);
+        }
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    const toggleSlot = (day, hourIdx) => {
+        setSelectedSlots(prev => ({
+            ...prev,
+            [day]: prev[day].map((selected, idx) =>
+                idx === hourIdx
+                    ? (dragMode === 'select' ? true : false)
+                    : selected
+            )
+        }));
+    };
+
+    const handleSaveHours = async () => {
+        const formatted = formatOpeningHours(selectedSlots);
+        await onSave(formatted);
+    };
+
+    const formattedPreview = formatOpeningHours(selectedSlots);
+
+    return (
+        <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+                <label className="text-xs font-medium text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                    <Clock size={16} />
+                    Opening Hours
+                </label>
+            </div>
+
+            {/* Grid */}
+            <div className="overflow-x-auto mb-4" onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
+                <div className="min-w-[600px]">
+                    {/* Header row */}
+                    <div className="grid grid-cols-14 gap-1 mb-2">
+                        <div className="text-xs font-medium text-gray-600 p-2"></div>
+                        {hours.map(hour => (
+                            <div key={hour} className="text-xs font-medium text-gray-600 text-center p-2">
+                                {hour > 12 ? hour - 12 : hour}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Day rows */}
+                    {days.map(day => (
+                        <div key={day} className="grid grid-cols-14 gap-1 mb-1">
+                            <div className="text-sm font-medium text-gray-700 p-2 flex items-center">
+                                {day}
+                            </div>
+                            {hours.map((hour, hourIdx) => (
+                                <div
+                                    key={hourIdx}
+                                    onMouseDown={() => handleMouseDown(day, hourIdx)}
+                                    onMouseEnter={() => handleMouseEnter(day, hourIdx)}
+                                    className={`
+                                        h-10 rounded cursor-pointer transition-all select-none
+                                        ${selectedSlots[day][hourIdx]
+                                            ? 'bg-stone-800 text-white border-stone-900'
+                                            : 'bg-gray-100 border-gray-300 hover:bg-gray-200'
+                                        }
+                                        border active:scale-95
+                                    `}
+                                    style={selectedSlots[day][hourIdx] ? { backgroundColor: '#3D2B1F' } : {}}
+                                />
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Preview */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                <div className="text-xs font-medium text-amber-900 mb-1">Preview:</div>
+                <div className="text-sm text-amber-800">{formattedPreview}</div>
+            </div>
+
+            {/* Save button */}
+            <button
+                onClick={handleSaveHours}
+                className="w-full px-4 py-3 bg-stone-800 text-white rounded-lg hover:shadow-lg transition-all font-medium"
+                style={{ backgroundColor: '#3D2B1F' }}
+            >
+                Set Opening Hours
+            </button>
+        </div>
+    );
+};
+
 const GeneralTab = ({ settings, setSettings, showMessage }) => {
     const fields = [
         { key: 'hero_title', label: 'Hero Title', icon: <Info size={16} /> },
@@ -237,7 +488,6 @@ const GeneralTab = ({ settings, setSettings, showMessage }) => {
         { key: 'whatsapp', label: 'WhatsApp Number', icon: <Phone size={16} /> },
         { key: 'email', label: 'Email Address', icon: <Mail size={16} /> },
         { key: 'address', label: 'Salon Address', icon: <MapPin size={16} /> },
-        { key: 'opening_hours', label: 'Opening Hours', icon: <Clock size={16} /> },
     ];
 
     const handleSave = async (key, value) => {
@@ -252,10 +502,15 @@ const GeneralTab = ({ settings, setSettings, showMessage }) => {
         }
     };
 
+    const handleSaveOpeningHours = async (formattedHours) => {
+        await handleSave('opening_hours', formattedHours);
+        setSettings({ ...settings, opening_hours: formattedHours });
+    };
+
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">General Settings</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 {fields.map(field => (
                     <div key={field.key} className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                         <label className="text-xs font-medium text-gray-500 uppercase tracking-wider flex items-center gap-2 mb-3">
@@ -278,6 +533,15 @@ const GeneralTab = ({ settings, setSettings, showMessage }) => {
                         </div>
                     </div>
                 ))}
+            </div>
+
+            {/* Opening Hours Picker - Full Width */}
+            <div className="mb-6">
+                <OpeningHoursPicker
+                    initialValue={settings.opening_hours || ''}
+                    onSave={handleSaveOpeningHours}
+                    showMessage={showMessage}
+                />
             </div>
         </motion.div>
     );
@@ -408,7 +672,25 @@ const ServicesTab = ({ services, refresh, showMessage }) => {
 };
 
 const PricingTab = ({ pricing, refresh, showMessage }) => {
-    const [newItem, setNewItem] = useState({ category: 'CUT & STYLING', item_name: '', price: '' });
+    const [localPricing, setLocalPricing] = useState(pricing);
+    const [newItem, setNewItem] = useState({ category: 'CUT & STYLING', item_name: '', price: '', duration_minutes: 60 });
+
+    useEffect(() => { setLocalPricing(pricing); }, [pricing]);
+
+    const handleFieldChange = (idx, field, value) => {
+        const updated = [...localPricing];
+        updated[idx] = { ...updated[idx], [field]: value };
+        setLocalPricing(updated);
+    };
+
+    const handleSaveItem = async (item) => {
+        try {
+            const { error } = await supabase.from('price_list').upsert(item);
+            if (error) throw error;
+            showMessage('success', 'Item updated');
+            refresh();
+        } catch (err) { showMessage('error', err.message); }
+    };
 
     const handleAdd = async () => {
         if (!newItem.item_name || !newItem.price) {
@@ -431,6 +713,14 @@ const PricingTab = ({ pricing, refresh, showMessage }) => {
             refresh();
             showMessage('success', 'Item removed');
         } catch (err) { showMessage('error', err.message); }
+    };
+
+    const formatDuration = (minutes) => {
+        if (!minutes) return 'Not set';
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        if (mins === 0) return `${hours}h`;
+        return `${hours}h ${mins}m`;
     };
 
     return (
@@ -463,6 +753,20 @@ const PricingTab = ({ pricing, refresh, showMessage }) => {
                         onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
                         className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                     />
+                    <select
+                        value={newItem.duration_minutes}
+                        onChange={(e) => setNewItem({ ...newItem, duration_minutes: parseInt(e.target.value) })}
+                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    >
+                        <option value={30}>30 min</option>
+                        <option value={60}>1 hour</option>
+                        <option value={90}>1.5h</option>
+                        <option value={120}>2h</option>
+                        <option value={150}>2.5h</option>
+                        <option value={180}>3h</option>
+                        <option value={210}>3.5h</option>
+                        <option value={240}>4h</option>
+                    </select>
                     <button
                         onClick={handleAdd}
                         className="px-6 py-2 bg-stone-800 text-white rounded-lg hover:-hover transition-all flex items-center gap-2" style={{ backgroundColor: "#3D2B1F" }}
@@ -473,18 +777,55 @@ const PricingTab = ({ pricing, refresh, showMessage }) => {
             </div>
 
             <div className="space-y-2">
-                {pricing.map((item) => (
-                    <div key={item.id} className="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
-                        <div>
-                            <span className="text-xs text-gray-500 uppercase tracking-wider">{item.category}</span>
-                            <p className="text-gray-900 font-medium">{item.item_name} <span className="text-stone-800 font-semibold ml-2">{item.price}</span></p>
+                {localPricing.map((item, idx) => (
+                    <div key={item.id || idx} className="bg-white rounded-lg border border-gray-200 p-4 flex flex-col md:flex-row md:items-center justify-between shadow-sm hover:shadow-md transition-shadow gap-4">
+                        <div className="flex-grow flex flex-col md:flex-row md:items-center gap-4">
+                            <div className="min-w-[120px]">
+                                <span className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">{item.category}</span>
+                                <input
+                                    value={item.item_name}
+                                    onChange={(e) => handleFieldChange(idx, 'item_name', e.target.value)}
+                                    className="text-gray-900 font-medium border-none p-0 focus:ring-0 outline-none w-full"
+                                />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    value={item.price}
+                                    onChange={(e) => handleFieldChange(idx, 'price', e.target.value)}
+                                    className="text-stone-800 font-semibold border-none p-0 focus:ring-0 outline-none w-24"
+                                />
+                                <select
+                                    value={item.duration_minutes || 60}
+                                    onChange={(e) => handleFieldChange(idx, 'duration_minutes', parseInt(e.target.value))}
+                                    className="text-xs border border-gray-200 rounded px-2 py-1 focus:ring-1 focus:ring-stone-400 outline-none"
+                                >
+                                    <option value={30}>30m</option>
+                                    <option value={60}>1h</option>
+                                    <option value={90}>1.5h</option>
+                                    <option value={120}>2h</option>
+                                    <option value={150}>2.5h</option>
+                                    <option value={180}>3h</option>
+                                    <option value={210}>3.5h</option>
+                                    <option value={240}>4h</option>
+                                </select>
+                            </div>
                         </div>
-                        <button
-                            onClick={() => handleDelete(item.id)}
-                            className="text-gray-400 hover:text-red-600 transition-colors p-2"
-                        >
-                            <Trash2 size={18} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => handleSaveItem(item)}
+                                className="text-stone-600 hover:text-stone-900 transition-colors p-2"
+                                title="Save"
+                            >
+                                <Save size={18} />
+                            </button>
+                            <button
+                                onClick={() => handleDelete(item.id)}
+                                className="text-gray-400 hover:text-red-600 transition-colors p-2"
+                                title="Delete"
+                            >
+                                <Trash2 size={18} />
+                            </button>
+                        </div>
                     </div>
                 ))}
             </div>
@@ -1300,8 +1641,8 @@ const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment }) 
                     <button
                         onClick={() => setCalendarViewMode('day')}
                         className={`flex-1 sm:flex-none px-3 py-2 rounded-md transition-all text-xs md:text-sm ${calendarViewMode === 'day'
-                                ? 'bg-white text-stone-800 shadow-sm font-medium'
-                                : 'text-gray-600 hover:text-gray-900'
+                            ? 'bg-white text-stone-800 shadow-sm font-medium'
+                            : 'text-gray-600 hover:text-gray-900'
                             }`}
                     >
                         Day
@@ -1309,8 +1650,8 @@ const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment }) 
                     <button
                         onClick={() => setCalendarViewMode('week')}
                         className={`flex-1 sm:flex-none px-3 py-2 rounded-md transition-all text-xs md:text-sm ${calendarViewMode === 'week'
-                                ? 'bg-white text-stone-800 shadow-sm font-medium'
-                                : 'text-gray-600 hover:text-gray-900'
+                            ? 'bg-white text-stone-800 shadow-sm font-medium'
+                            : 'text-gray-600 hover:text-gray-900'
                             }`}
                     >
                         Week
@@ -1318,8 +1659,8 @@ const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment }) 
                     <button
                         onClick={() => setCalendarViewMode('month')}
                         className={`flex-1 sm:flex-none px-3 py-2 rounded-md transition-all text-xs md:text-sm ${calendarViewMode === 'month'
-                                ? 'bg-white text-stone-800 shadow-sm font-medium'
-                                : 'text-gray-600 hover:text-gray-900'
+                            ? 'bg-white text-stone-800 shadow-sm font-medium'
+                            : 'text-gray-600 hover:text-gray-900'
                             }`}
                     >
                         Month

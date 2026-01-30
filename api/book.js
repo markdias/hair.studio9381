@@ -8,7 +8,8 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { stylist, service, date, time, name, email, phone } = req.body;
+    const { stylist, service, date, time, name, email, phone, duration_minutes } = req.body;
+    const duration = parseInt(duration_minutes) || 60;
 
     if (!date || !time || !name || !email) {
         return res.status(400).json({ error: 'Missing required fields' });
@@ -100,7 +101,7 @@ export default async function handler(req, res) {
 
         // Build ISO strings for start and end
         const startDateTime = new Date(`${date}T${time}:00`).toISOString();
-        const endDateTime = new Date(new Date(`${date}T${time}:00`).getTime() + 60 * 60 * 1000).toISOString();
+        const endDateTime = new Date(new Date(`${date}T${time}:00`).getTime() + duration * 60 * 1000).toISOString();
 
         console.log(`Final check - Using Calendar ID: ${calendarId}`);
         console.log(`Event details: ${service} for ${name} at ${startDateTime}`);
