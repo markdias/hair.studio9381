@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar as CalendarIcon, Clock, User, Scissors, Check, ChevronRight, ChevronLeft, Phone, Mail } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, User, Scissors, Check, ChevronRight, ChevronLeft, Phone, Mail, Loader2 } from 'lucide-react';
 
 const stylists = [
     { name: 'Jo', role: 'Owner & Creative Director', img: '/jo.png' },
@@ -14,8 +14,6 @@ const categories = [
     { title: "TREATMENTS", items: ["Keratin blowdry", "Hair Botox", "Olaplex"] },
 ];
 
-const timeSlots = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
-
 const BookingSystem = () => {
     const [step, setStep] = useState(1);
     const [booking, setBooking] = useState({
@@ -28,18 +26,61 @@ const BookingSystem = () => {
         phone: ''
     });
 
+    const [timeSlots, setTimeSlots] = useState([]);
+    const [isLoadingSlots, setIsLoadingSlots] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (booking.date) {
+            fetchAvailability(booking.date);
+        }
+    }, [booking.date]);
+
+    const fetchAvailability = async (date) => {
+        setIsLoadingSlots(true);
+        setError(null);
+        try {
+            const response = await fetch(`/api/availability?date=${date}`);
+            const data = await response.json();
+            if (data.slots) {
+                setTimeSlots(data.slots);
+            } else {
+                setError('Could not load time slots');
+            }
+        } catch (err) {
+            console.error('Fetch error:', err);
+            setError('Communication error with server');
+        } finally {
+            setIsLoadingSlots(false);
+        }
+    };
 
     const nextStep = () => setStep(s => s + 1);
     const prevStep = () => setStep(s => s - 1);
 
-    const handleBooking = () => {
+    const handleBooking = async () => {
         setIsSubmitting(true);
-        setTimeout(() => {
+        setError(null);
+        try {
+            const response = await fetch('/api/book', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(booking)
+            });
+            const data = await response.json();
+            if (data.success) {
+                setIsSuccess(true);
+            } else {
+                setError(data.error || 'Failed to create booking');
+            }
+        } catch (err) {
+            console.error('Booking error:', err);
+            setError('Failed to connect to booking server');
+        } finally {
             setIsSubmitting(false);
-            setIsSuccess(true);
-        }, 2000);
+        }
     };
 
     const containerVariants = {
@@ -105,7 +146,7 @@ const BookingSystem = () => {
                                     <h3 style={{ fontSize: '2.5rem', color: '#3D2B1F', marginBottom: '15px' }}>Booking Confirmed!</h3>
                                     <p style={{ color: '#666', marginBottom: '40px' }}>We've sent a confirmation email to {booking.email}.</p>
                                     <button
-                                        onClick={() => { setIsSuccess(false); setStep(1); setBooking({}); }}
+                                        onClick={() => { setIsSuccess(false); setStep(1); setBooking({ stylist: null, service: null, date: null, time: null, name: '', email: '', phone: '' }); }}
                                         className="btn-primary"
                                     >
                                         Book Another
@@ -113,6 +154,12 @@ const BookingSystem = () => {
                                 </motion.div>
                             ) : (
                                 <motion.div key={step} variants={containerVariants} initial="hidden" animate="visible" exit="exit" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+
+                                    {error && (
+                                        <div style={{ padding: '15px', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '8px', marginBottom: '20px', fontSize: '0.9rem' }}>
+                                            {error}
+                                        </div>
+                                    )}
 
                                     {step === 1 && (
                                         <div style={{ flex: 1 }}>
@@ -188,7 +235,7 @@ const BookingSystem = () => {
                                                         <input
                                                             type="date"
                                                             min={new Date().toISOString().split('T')[0]}
-                                                            onChange={(e) => setBooking({ ...booking, date: e.target.value })}
+                                                            onChange={(e) => setBooking({ ...booking, date: e.target.value, time: null })}
                                                             value={booking.date || ''}
                                                             style={{
                                                                 width: '100%',
@@ -210,30 +257,43 @@ const BookingSystem = () => {
                                                     <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#3D2B1F', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
                                                         Available Time Slots
                                                     </label>
-                                                    <div className="booking-time-grid" style={{
-                                                        display: 'grid',
-                                                        gap: '12px'
-                                                    }}>
-                                                        {timeSlots.map(t => (
-                                                            <button
-                                                                key={t}
-                                                                onClick={() => setBooking({ ...booking, time: t })}
-                                                                style={{
-                                                                    padding: '12px 0',
-                                                                    borderRadius: '10px',
-                                                                    border: booking.time === t ? '2px solid #3D2B1F' : '1px solid #EAE0D5',
-                                                                    backgroundColor: booking.time === t ? '#3D2B1F' : 'white',
-                                                                    color: booking.time === t ? '#FFF' : '#3D2B1F',
-                                                                    fontWeight: booking.time === t ? '700' : '400',
-                                                                    fontSize: '0.9rem',
-                                                                    transition: 'all 0.2s ease',
-                                                                    cursor: 'pointer'
-                                                                }}
-                                                            >
-                                                                {t}
-                                                            </button>
-                                                        ))}
-                                                    </div>
+                                                    {isLoadingSlots ? (
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#666', padding: '20px 0' }}>
+                                                            <Loader2 className="animate-spin" size={20} />
+                                                            <span>Checking availability...</span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="booking-time-grid" style={{
+                                                            display: 'grid',
+                                                            gap: '12px'
+                                                        }}>
+                                                            {timeSlots.length > 0 ? (
+                                                                timeSlots.map(t => (
+                                                                    <button
+                                                                        key={t}
+                                                                        onClick={() => setBooking({ ...booking, time: t })}
+                                                                        style={{
+                                                                            padding: '12px 0',
+                                                                            borderRadius: '10px',
+                                                                            border: booking.time === t ? '2px solid #3D2B1F' : '1px solid #EAE0D5',
+                                                                            backgroundColor: booking.time === t ? '#3D2B1F' : 'white',
+                                                                            color: booking.time === t ? '#FFF' : '#3D2B1F',
+                                                                            fontWeight: booking.time === t ? '700' : '400',
+                                                                            fontSize: '0.9rem',
+                                                                            transition: 'all 0.2s ease',
+                                                                            cursor: 'pointer'
+                                                                        }}
+                                                                    >
+                                                                        {t}
+                                                                    </button>
+                                                                ))
+                                                            ) : (
+                                                                <div style={{ gridColumn: '1 / -1', padding: '20px', backgroundColor: '#F9F9F9', borderRadius: '10px', textAlign: 'center', color: '#999' }}>
+                                                                    {booking.date ? 'No slots available for this date.' : 'Please select a date first.'}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -281,9 +341,9 @@ const BookingSystem = () => {
                                             {step < 4 ? (
                                                 <button
                                                     onClick={nextStep}
-                                                    disabled={(step === 2 && !booking.service) || (step === 3 && (!booking.date || !booking.time))}
+                                                    disabled={(step === 2 && !booking.service) || (step === 3 && (!booking.date || !booking.time || isLoadingSlots))}
                                                     className="btn-primary"
-                                                    style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: ((step === 2 && !booking.service) || (step === 3 && (!booking.date || !booking.time))) ? 0.5 : 1 }}
+                                                    style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: ((step === 2 && !booking.service) || (step === 3 && (!booking.date || !booking.time || isLoadingSlots))) ? 0.5 : 1 }}
                                                 >
                                                     Next Step <ChevronRight size={20} />
                                                 </button>
