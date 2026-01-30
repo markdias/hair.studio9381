@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
 import { startOfDay, endOfDay, addMinutes, format, parseISO, isWithinInterval } from 'date-fns';
-import { supabase } from './_lib/supabase';
+import { supabase } from './_lib/supabase.js';
 
 const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
 
