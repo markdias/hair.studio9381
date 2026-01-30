@@ -400,8 +400,8 @@ const Contact = () => {
                     <ContactItem
                         icon={<Mail size={24} />}
                         label="Email"
-                        value="hairs.studio938@gmail.com"
-                        link="mailto:hairs.studio938@gmail.com"
+                        value="hair.studio938@gmail.com"
+                        link="mailto:hair.studio938@gmail.com"
                     />
                 </div>
 
