@@ -119,8 +119,8 @@ const Hero = () => {
                 <p className="responsive-p" style={{ fontSize: '1.25rem', marginBottom: '2.5rem', letterSpacing: '2px', fontWeight: '300', opacity: 0.9 }}>
                     Luxury hair styling and bespoke treatments at 938 High Road.
                 </p>
-                <div className="hero-buttons" style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap', width: '100%' }}>
-                    <a href="#booking" className="btn-primary" style={{ textDecoration: 'none', flex: '0 1 auto' }}>Book Now</a>
+                <div className="hero-buttons" style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap', width: '100%', margin: '0 auto' }}>
+                    <a href="#booking" className="btn-primary" style={{ textDecoration: 'none' }}>Book Now</a>
                     <a href="#services" style={{
                         border: '1px solid #FFFFFF',
                         color: '#FFFFFF',
@@ -129,8 +129,7 @@ const Hero = () => {
                         textTransform: 'uppercase',
                         letterSpacing: '1px',
                         fontWeight: '600',
-                        textDecoration: 'none',
-                        flex: '0 1 auto'
+                        textDecoration: 'none'
                     }}>
                         Our Services
                     </a>

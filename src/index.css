@@ -200,6 +200,7 @@ button {
     flex-direction: column !important;
     align-items: center !important;
     gap: 15px !important;
+    padding: 0 !important;
   }
 
   .hero-buttons a {
@@ -207,6 +208,8 @@ button {
     max-width: 280px !important;
     text-align: center !important;
     display: block !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
   }
 
   /* Ensure all sections are centered */
