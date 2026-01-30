@@ -269,20 +269,90 @@ const GeneralTab = ({ settings, setSettings, showMessage }) => {
     );
 };
 
+const MasterDetailLayout = ({ title, items, renderItem, renderDetail, onAdd, activeId, onSelect }) => {
+    return (
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="h-[calc(100vh-140px)] flex flex-col">
+            <div className="flex items-center justify-between mb-8 shrink-0">
+                <h2 className="text-3xl font-light bg-gradient-to-r from-white to-white/40 bg-clip-text text-transparent italic">{title}</h2>
+                {onAdd && (
+                    <button
+                        onClick={onAdd}
+                        className="flex items-center gap-2 px-6 py-3 bg-white text-black font-bold rounded-2xl text-xs tracking-widest uppercase hover:bg-white/90 transition-all"
+                    >
+                        <Plus size={16} /> ADD NEW
+                    </button>
+                )}
+            </div>
+
+            <div className="flex-grow flex gap-6 overflow-hidden">
+                {/* Left Panel: List */}
+                <div className="w-1/3 min-w-[300px] flex flex-col gap-3 overflow-y-auto pr-2">
+                    {items.map((item, idx) => (
+                        <div
+                            key={item.id || idx}
+                            onClick={() => onSelect(item)}
+                            className={`p-5 rounded-2xl border cursor-pointer transition-all duration-300 flex items-center justify-between group ${activeId === (item.id || idx)
+                                ? 'bg-white text-black border-white'
+                                : 'bg-white/5 border-white/5 hover:bg-white/10 text-white/60 hover:text-white'
+                                }`}
+                        >
+                            <div className="flex items-center gap-4">
+                                {renderItem(item)}
+                            </div>
+                            <ChevronRight size={16} className={`transition-transform ${activeId === (item.id || idx) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
+                        </div>
+                    ))}
+                    {items.length === 0 && (
+                        <div className="text-white/20 text-center py-12 italic text-sm">No items found</div>
+                    )}
+                </div>
+
+                {/* Right Panel: Detail Form */}
+                <div className="flex-grow bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 overflow-y-auto">
+                    {activeId !== null && renderDetail ? (
+                        <motion.div
+                            key={activeId}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="h-full"
+                        >
+                            {renderDetail()}
+                        </motion.div>
+                    ) : (
+                        <div className="h-full flex flex-col items-center justify-center text-white/20 gap-4">
+                            <Info size={48} strokeWidth={1} />
+                            <p className="tracking-widest text-xs uppercase">Select an item to edit</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
 const ServicesTab = ({ services, refresh, showMessage }) => {
     const [localServices, setLocalServices] = useState(services);
+    const [selectedService, setSelectedService] = useState(null);
 
-    useEffect(() => { setLocalServices(services); }, [services]);
+    useEffect(() => {
+        setLocalServices(services);
+        if (services.length > 0 && !selectedService) setSelectedService(services[0]);
+    }, [services]);
 
-    const handleFieldChange = (idx, field, value) => {
-        const updated = [...localServices];
-        updated[idx] = { ...updated[idx], [field]: value };
-        setLocalServices(updated);
+    const handleFieldChange = (field, value) => {
+        if (!selectedService) return;
+        const updated = { ...selectedService, [field]: value };
+        setSelectedService(updated);
+
+        // Update local list instantly for preview
+        setLocalServices(prev => prev.map(s => s.id === updated.id ? updated : s));
     };
 
-    const handleSave = async (s) => {
+    const handleSave = async () => {
+        if (!selectedService) return;
         try {
-            const { error } = await supabase.from('services_overview').upsert(s);
+            const { error } = await supabase.from('services_overview').upsert(selectedService);
             if (error) throw error;
             showMessage('success', 'Service updated!');
             refresh();
@@ -290,245 +360,293 @@ const ServicesTab = ({ services, refresh, showMessage }) => {
     };
 
     return (
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            <h2 className="text-3xl font-light mb-8 bg-gradient-to-r from-white to-white/40 bg-clip-text text-transparent italic">Service Cards</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {localServices.map((s, idx) => (
-                    <div key={s.id || idx} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 space-y-6 flex flex-col justify-between hover:bg-white/[0.07] transition-all duration-500">
-                        <div className="space-y-4">
-                            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white/50 border border-white/10">
-                                <Scissors size={20} />
-                            </div>
-                            <input
-                                placeholder="Service Title"
-                                value={s.title}
-                                onChange={(e) => handleFieldChange(idx, 'title', e.target.value)}
-                                className="w-full bg-transparent border-none text-xl font-medium p-0 focus:ring-0 placeholder:text-white/20"
-                            />
-                            <textarea
-                                placeholder="Description"
-                                value={s.description || s.desc || ''}
-                                onChange={(e) => handleFieldChange(idx, 'description', e.target.value)}
-                                className="w-full bg-transparent border-none text-white/60 text-sm h-32 resize-none p-0 focus:ring-0 placeholder:text-white/20 leading-relaxed"
-                            />
-                        </div>
-                        <button onClick={() => handleSave(s)} className="w-full bg-white text-black font-bold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-white/90 active:scale-95 transition-all text-xs tracking-widest uppercase">
-                            <Save size={14} /> SAVE CHANGES
+        <MasterDetailLayout
+            title="Service Highlights"
+            items={localServices}
+            activeId={selectedService?.id}
+            onSelect={setSelectedService}
+            renderItem={(item) => (
+                <>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${selectedService?.id === item.id ? 'bg-black/10 border-black/10 text-black' : 'bg-white/10 border-white/10'}`}>
+                        <Scissors size={18} />
+                    </div>
+                    <span className="font-medium tracking-wide text-sm">{item.title || 'Untitled Service'}</span>
+                </>
+            )}
+            renderDetail={() => selectedService && (
+                <div className="space-y-6 max-w-2xl mx-auto py-4">
+                    <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 ml-1">Title</label>
+                        <input
+                            value={selectedService.title}
+                            onChange={(e) => handleFieldChange('title', e.target.value)}
+                            className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-xl font-medium text-white focus:border-white/30 outline-none transition-all"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 ml-1">Description</label>
+                        <textarea
+                            value={selectedService.description || selectedService.desc || ''}
+                            onChange={(e) => handleFieldChange('description', e.target.value)}
+                            className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white/80 h-48 resize-none focus:border-white/30 outline-none transition-all leading-relaxed"
+                        />
+                    </div>
+
+                    <div className="pt-8 flex justify-end">
+                        <button onClick={handleSave} className="bg-white text-black font-bold py-4 px-12 rounded-2xl flex items-center gap-3 hover:bg-white/90 active:scale-95 transition-all text-xs tracking-widest uppercase">
+                            <Save size={16} /> SAVE CHANGES
                         </button>
                     </div>
-                ))}
-            </div>
-        </motion.div>
+                </div>
+            )}
+        />
     );
 };
 
 const PricingTab = ({ pricing, refresh, showMessage }) => {
-    const [newItem, setNewItem] = useState({ category: 'CUT & STYLING', item_name: '', price: '' });
+    const [localPricing, setLocalPricing] = useState(pricing);
+    const [selectedItem, setSelectedItem] = useState(null);
 
-    const handleAdd = async () => {
-        if (!newItem.item_name || !newItem.price) {
-            showMessage('error', 'Please fill in all fields');
-            return;
-        }
+    useEffect(() => { setLocalPricing(pricing); }, [pricing]);
+
+    const handleFieldChange = (field, value) => {
+        if (!selectedItem) return;
+        const updated = { ...selectedItem, [field]: value };
+        setSelectedItem(updated);
+        setLocalPricing(prev => prev.map(p => p.id === updated.id ? updated : p));
+    };
+
+    const handleSave = async () => {
+        if (!selectedItem) return;
         try {
-            const { error } = await supabase.from('price_list').insert([newItem]);
+            // Remove 'id' if it's new/temp to allow auto-increment/UUID generation if needed, 
+            // BUT Supabase usually needs ID for updates.
+            // If ID is 'new', we remove it.
+            const { id, ...toSave } = selectedItem;
+
+            let error;
+            if (id === 'new') {
+                const { error: insertError } = await supabase.from('price_list').insert([toSave]);
+                error = insertError;
+            } else {
+                const { error: updateError } = await supabase.from('price_list').upsert(selectedItem);
+                error = updateError;
+            }
+
             if (error) throw error;
-            setNewItem({ ...newItem, item_name: '', price: '' });
+            showMessage('success', 'Price list updated!');
             refresh();
-            showMessage('success', 'Added to price list');
+            setSelectedItem(null); // Deselect or perhaps fetch new ID? Refresh will reload list.
         } catch (err) { showMessage('error', err.message); }
     };
 
-    const handleDelete = async (id) => {
+    const handleAdd = () => {
+        const newItem = { id: 'new', category: 'CUT & STYLING', item_name: 'New Service', price: '£0' };
+        setLocalPricing([newItem, ...localPricing]);
+        setSelectedItem(newItem);
+    };
+
+    const handleDelete = async () => {
+        if (!selectedItem) return;
+        if (selectedItem.id === 'new') {
+            setLocalPricing(prev => prev.filter(p => p.id !== 'new'));
+            setSelectedItem(null);
+            return;
+        }
         if (!confirm('Are you sure you want to remove this item?')) return;
         try {
-            await supabase.from('price_list').delete().eq('id', id);
+            await supabase.from('price_list').delete().eq('id', selectedItem.id);
             refresh();
+            setSelectedItem(null);
             showMessage('success', 'Item removed');
         } catch (err) { showMessage('error', err.message); }
     };
 
     return (
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            <h2 className="text-3xl font-light mb-8 bg-gradient-to-r from-white to-white/40 bg-clip-text text-transparent italic">Price List</h2>
-
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 mb-12 flex flex-wrap items-end gap-6 hover:bg-white/[0.07] transition-all duration-500">
-                <div className="flex-grow space-y-2">
-                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 ml-1">Category</label>
-                    <select
-                        value={newItem.category}
-                        onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white/80 outline-none focus:border-white/30 transition-all appearance-none cursor-pointer"
-                    >
-                        <option>CUT & STYLING</option>
-                        <option>COLOURING</option>
-                        <option>HAIR TREATMENTS</option>
-                        <option>HAIR EXTENSIONS</option>
-                        <option>MAKE UP</option>
-                    </select>
+        <MasterDetailLayout
+            title="Price List"
+            items={localPricing}
+            activeId={selectedItem?.id}
+            onSelect={setSelectedItem}
+            onAdd={handleAdd}
+            renderItem={(item) => (
+                <div className="flex flex-col">
+                    <span className="font-medium text-sm">{item.item_name}</span>
+                    <span className="text-[10px] text-white/40 uppercase tracking-wider">{item.category}</span>
                 </div>
-                <div className="flex-grow-[3] space-y-2">
-                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 ml-1">Service Name</label>
-                    <input
-                        placeholder="e.g. Wash & Cut"
-                        value={newItem.item_name}
-                        onChange={(e) => setNewItem({ ...newItem, item_name: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white/80 focus:border-white/30 transition-all placeholder:text-white/20"
-                    />
-                </div>
-                <div className="w-32 space-y-2">
-                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 ml-1">Price</label>
-                    <input
-                        placeholder="£50"
-                        value={newItem.price}
-                        onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white/80 focus:border-white/30 transition-all placeholder:text-white/20"
-                    />
-                </div>
-                <button onClick={handleAdd} className="bg-white text-black h-[58px] w-[58px] rounded-2xl flex items-center justify-center hover:bg-white/90 active:scale-95 transition-all">
-                    <Plus size={24} />
-                </button>
-            </div>
-
-            <div className="grid gap-3">
-                {pricing.map((item) => (
-                    <div key={item.id} className="bg-white/5 backdrop-blur-xl border border-white/5 rounded-2xl p-6 flex items-center justify-between group hover:bg-white/[0.08] hover:border-white/10 transition-all duration-300">
-                        <div className="flex flex-col">
-                            <span className="text-[10px] text-white/30 uppercase tracking-[0.2em] mb-1">{item.category}</span>
-                            <span className="font-light tracking-wide">{item.item_name} <span className="mx-2 text-white/10">/</span> <span className="text-white/80 font-semibold">{item.price}</span></span>
+            )}
+            renderDetail={() => selectedItem && (
+                <div className="space-y-6 max-w-2xl mx-auto py-4">
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 ml-1">Category</label>
+                            <select
+                                value={selectedItem.category}
+                                onChange={(e) => handleFieldChange('category', e.target.value)}
+                                className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white/80 outline-none focus:border-white/30 transition-all appearance-none cursor-pointer"
+                            >
+                                <option>CUT & STYLING</option>
+                                <option>COLOURING</option>
+                                <option>HAIR TREATMENTS</option>
+                                <option>HAIR EXTENSIONS</option>
+                                <option>MAKE UP</option>
+                            </select>
                         </div>
-                        <button onClick={() => handleDelete(item.id)} className="text-white/10 hover:text-red-400 transition-colors p-3 hover:bg-red-500/10 rounded-xl">
-                            <Trash2 size={18} />
+                        <div className="space-y-2">
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 ml-1">Price</label>
+                            <input
+                                value={selectedItem.price}
+                                onChange={(e) => handleFieldChange('price', e.target.value)}
+                                className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white/80 focus:border-white/30 outline-none"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 ml-1">Service Name</label>
+                        <input
+                            value={selectedItem.item_name}
+                            onChange={(e) => handleFieldChange('item_name', e.target.value)}
+                            className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-xl font-medium text-white focus:border-white/30 outline-none"
+                        />
+                    </div>
+
+                    <div className="pt-8 flex justify-between items-center">
+                        <button onClick={handleDelete} className="text-red-400 hover:text-red-300 text-xs uppercase tracking-widest px-4 py-2 hover:bg-red-500/10 rounded-lg transition-all">
+                            Delete Item
+                        </button>
+                        <button onClick={handleSave} className="bg-white text-black font-bold py-4 px-12 rounded-2xl flex items-center gap-3 hover:bg-white/90 active:scale-95 transition-all text-xs tracking-widest uppercase">
+                            <Save size={16} /> SAVE CHANGES
                         </button>
                     </div>
-                ))}
-            </div>
-        </motion.div>
+                </div>
+            )}
+        />
     );
 };
 
 const TeamTab = ({ stylists, refresh, showMessage }) => {
     const [localStylists, setLocalStylists] = useState(stylists);
-    const [isAdding, setIsAdding] = useState(false);
-    const [newStylist, setNewStylist] = useState({ stylist_name: '', role: '', description: '', calendar_id: '', image_url: '' });
+    const [selectedStylist, setSelectedStylist] = useState(null);
 
     useEffect(() => { setLocalStylists(stylists); }, [stylists]);
 
-    const handleFieldChange = (idx, field, value) => {
-        const updated = [...localStylists];
-        updated[idx] = { ...updated[idx], [field]: value };
-        setLocalStylists(updated);
+    const handleFieldChange = (field, value) => {
+        if (!selectedStylist) return;
+        const updated = { ...selectedStylist, [field]: value };
+        setSelectedStylist(updated);
+        setLocalStylists(prev => prev.map(s => s.id === updated.id ? updated : s));
     };
 
-    const handleSave = async (s) => {
+    const handleSave = async () => {
+        if (!selectedStylist) return;
         try {
-            const { error } = await supabase.from('stylist_calendars').upsert(s);
+            const { id, ...toSave } = selectedStylist;
+            let error;
+            if (id === 'new') {
+                const { error: insertError } = await supabase.from('stylist_calendars').insert([toSave]);
+                error = insertError;
+            } else {
+                const { error: updateError } = await supabase.from('stylist_calendars').upsert(selectedStylist);
+                error = updateError;
+            }
+
             if (error) throw error;
-            showMessage('success', `Stylist ${s.stylist_name} updated!`);
+            showMessage('success', `Stylist ${selectedStylist.stylist_name} updated!`);
             refresh();
+            // Keep selected if update, deselect/refresh if insert? 
+            // Refresh will clobber local state, so let's deselect to be safe.
+            setSelectedStylist(null);
         } catch (err) { showMessage('error', err.message); }
     };
 
-    const handleAdd = async () => {
-        if (!newStylist.stylist_name) return showMessage('error', 'Stylist name is required');
-        try {
-            const { error } = await supabase.from('stylist_calendars').insert([newStylist]);
-            if (error) throw error;
-            setNewStylist({ stylist_name: '', role: '', description: '', calendar_id: '', image_url: '' });
-            setIsAdding(false);
-            refresh();
-            showMessage('success', 'New stylist added!');
-        } catch (err) { showMessage('error', err.message); }
+    const handleAdd = () => {
+        const newStylist = { id: 'new', stylist_name: 'New Stylist', role: 'Stylist', description: '', calendar_id: '', image_url: '' };
+        setLocalStylists([newStylist, ...localStylists]);
+        setSelectedStylist(newStylist);
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async () => {
+        if (!selectedStylist) return;
+        if (selectedStylist.id === 'new') {
+            setLocalStylists(prev => prev.filter(s => s.id !== 'new'));
+            setSelectedStylist(null);
+            return;
+        }
         if (!confirm('Are you sure you want to delete this stylist?')) return;
         try {
-            const { error } = await supabase.from('stylist_calendars').delete().eq('id', id);
-            if (error) throw error;
+            await supabase.from('stylist_calendars').delete().eq('id', selectedStylist.id);
             refresh();
+            setSelectedStylist(null);
             showMessage('success', 'Stylist removed');
         } catch (err) { showMessage('error', err.message); }
     };
 
     return (
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            <div className="flex items-center justify-between mb-8">
-                <h2 className="text-3xl font-light bg-gradient-to-r from-white to-white/40 bg-clip-text text-transparent italic">Team Members</h2>
-                <button
-                    onClick={() => setIsAdding(!isAdding)}
-                    className="flex items-center gap-2 px-6 py-3 bg-white text-black font-bold rounded-2xl text-xs tracking-widest uppercase hover:bg-white/90 transition-all"
-                >
-                    <Plus size={16} /> ADD STYLIST
-                </button>
-            </div>
-
-            {isAdding && (
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 mb-12 space-y-6">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-xs uppercase tracking-[0.2em] text-white/40 mb-2">New Stylist Details</h3>
-                        <ImageUploader
-                            folder="team"
-                            onUpload={(url) => setNewStylist({ ...newStylist, image_url: url })}
-                            showMessage={showMessage}
-                        />
+        <MasterDetailLayout
+            title="Team Members"
+            items={localStylists}
+            activeId={selectedStylist?.id}
+            onSelect={setSelectedStylist}
+            onAdd={handleAdd}
+            renderItem={(s) => (
+                <>
+                    <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 bg-black/40 shrink-0">
+                        <img src={s.image_url || '/placeholder.png'} className="w-full h-full object-cover grayscale" />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <input value={newStylist.stylist_name} onChange={e => setNewStylist({ ...newStylist, stylist_name: e.target.value })} placeholder="Name" className="bg-black/40 border border-white/10 rounded-2xl py-4 px-6 focus:border-white/30 outline-none" />
-                        <input value={newStylist.role} onChange={e => setNewStylist({ ...newStylist, role: e.target.value })} placeholder="Role" className="bg-black/40 border border-white/10 rounded-2xl py-4 px-6 focus:border-white/30 outline-none" />
-                        <input value={newStylist.image_url} onChange={e => setNewStylist({ ...newStylist, image_url: e.target.value })} placeholder="Image URL" className="bg-black/40 border border-white/10 rounded-2xl py-4 px-6 md:col-span-2 text-xs text-white/40" />
+                    <div className="flex flex-col">
+                        <span className="font-medium text-sm">{s.stylist_name}</span>
+                        <span className="text-[10px] text-white/40 uppercase tracking-wider">{s.role}</span>
                     </div>
-                    <div className="flex gap-4">
-                        <button onClick={handleAdd} className="flex-grow bg-white text-black font-bold py-4 rounded-2xl uppercase text-xs tracking-widest hover:bg-white/90">Create Stylist</button>
-                        <button onClick={() => setIsAdding(false)} className="px-8 bg-white/5 text-white/40 font-bold rounded-2xl uppercase text-xs tracking-widest border border-white/10 hover:bg-white/10">Cancel</button>
-                    </div>
-                </div>
+                </>
             )}
-
-            <div className="grid gap-6">
-                {localStylists.map((s, idx) => (
-                    <div key={s.id || idx} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 hover:bg-white/[0.07] transition-all duration-500">
-                        <div className="flex flex-col lg:flex-row gap-8">
-                            <div className="space-y-4">
-                                <div className="w-20 h-20 rounded-3xl overflow-hidden border border-white/10 bg-black/40 shrink-0 mx-auto relative group">
-                                    <img src={s.image_url || '/placeholder.png'} className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" />
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <ImageUploader
-                                            folder="team"
-                                            onUpload={(url) => handleFieldChange(idx, 'image_url', url)}
-                                            showMessage={showMessage}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <button onClick={() => handleSave(s)} className="bg-white text-black font-bold py-3 px-4 rounded-xl text-[10px] tracking-widest uppercase hover:bg-white/90">Save</button>
-                                    <button onClick={() => handleDelete(s.id)} className="bg-red-500/10 text-red-400 py-3 px-4 rounded-xl text-[10px] tracking-widest uppercase hover:bg-red-500/20">Delete</button>
-                                </div>
+            renderDetail={() => selectedStylist && (
+                <div className="space-y-8 max-w-2xl mx-auto py-4">
+                    <div className="flex items-start gap-8">
+                        <div className="w-32 h-32 rounded-3xl overflow-hidden border border-white/10 bg-black/40 shrink-0 relative group">
+                            <img src={selectedStylist.image_url || '/placeholder.png'} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <ImageUploader
+                                    folder="team"
+                                    onUpload={(url) => handleFieldChange('image_url', url)}
+                                    showMessage={showMessage}
+                                />
                             </div>
-
-                            <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 ml-1">Name</label>
-                                    <input value={s.stylist_name} onChange={(e) => handleFieldChange(idx, 'stylist_name', e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white/80 focus:border-white/30 outline-none" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 ml-1">Role</label>
-                                    <input value={s.role || ''} placeholder="e.g. Master Stylist" onChange={(e) => handleFieldChange(idx, 'role', e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white/80 italic font-light focus:border-white/30 outline-none" />
-                                </div>
-                                <div className="space-y-2 md:col-span-2">
-                                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 ml-1">Calendar ID</label>
-                                    <input value={s.calendar_id || ''} onChange={(e) => handleFieldChange(idx, 'calendar_id', e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white/40 text-xs focus:border-white/30 outline-none" />
-                                </div>
-                                <div className="space-y-2 md:col-span-2">
-                                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 ml-1">Bio</label>
-                                    <textarea value={s.description || ''} onChange={(e) => handleFieldChange(idx, 'description', e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white/60 h-24 resize-none focus:ring-0 leading-relaxed text-sm focus:border-white/30 outline-none" />
-                                </div>
+                        </div>
+                        <div className="flex-grow space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 ml-1">Name</label>
+                                <input value={selectedStylist.stylist_name} onChange={(e) => handleFieldChange('stylist_name', e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white/80 focus:border-white/30 outline-none" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 ml-1">Role</label>
+                                <input value={selectedStylist.role || ''} placeholder="e.g. Master Stylist" onChange={(e) => handleFieldChange('role', e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white/80 italic font-light focus:border-white/30 outline-none" />
                             </div>
                         </div>
                     </div>
-                ))}
-            </div>
-        </motion.div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 ml-1">Calendar ID</label>
+                        <input value={selectedStylist.calendar_id || ''} onChange={(e) => handleFieldChange('calendar_id', e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white/40 text-xs focus:border-white/30 outline-none font-mono" />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 ml-1">Bio</label>
+                        <textarea value={selectedStylist.description || ''} onChange={(e) => handleFieldChange('description', e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white/60 h-32 resize-none focus:ring-0 leading-relaxed text-sm focus:border-white/30 outline-none" />
+                    </div>
+
+                    <div className="pt-8 flex justify-between items-center">
+                        <button onClick={handleDelete} className="text-red-400 hover:text-red-300 text-xs uppercase tracking-widest px-4 py-2 hover:bg-red-500/10 rounded-lg transition-all">
+                            Delete Stylist
+                        </button>
+                        <button onClick={handleSave} className="bg-white text-black font-bold py-4 px-12 rounded-2xl flex items-center gap-3 hover:bg-white/90 active:scale-95 transition-all text-xs tracking-widest uppercase">
+                            <Save size={16} /> SAVE CHANGES
+                        </button>
+                    </div>
+                </div>
+            )}
+        />
     );
 };
 
