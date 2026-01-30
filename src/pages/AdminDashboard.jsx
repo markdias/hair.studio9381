@@ -813,53 +813,53 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage }) => {
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-semibold text-gray-900">Appointments</h2>
-                <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4 md:mb-6">
+                <h2 className="text-xl md:text-2xl font-semibold text-gray-900">Appointments</h2>
+                <div className="flex items-center gap-2 md:gap-3 w-full sm:w-auto">
                     {/* View Toggle */}
-                    <div className="flex bg-gray-100 rounded-lg p-1">
+                    <div className="flex bg-gray-100 rounded-lg p-1 flex-1 sm:flex-none">
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all ${viewMode === 'list'
+                            className={`flex items-center justify-center gap-1 md:gap-2 px-2 md:px-3 py-2 rounded-md transition-all text-xs md:text-sm flex-1 sm:flex-none ${viewMode === 'list'
                                 ? 'bg-white text-stone-800 shadow-sm'
                                 : 'text-gray-600 hover:text-gray-900'
                                 }`}
                         >
-                            <List size={18} />
-                            List
+                            <List size={16} />
+                            <span className="hidden sm:inline">List</span>
                         </button>
                         <button
                             onClick={() => setViewMode('calendar')}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all ${viewMode === 'calendar'
+                            className={`flex items-center justify-center gap-1 md:gap-2 px-2 md:px-3 py-2 rounded-md transition-all text-xs md:text-sm flex-1 sm:flex-none ${viewMode === 'calendar'
                                 ? 'bg-white text-stone-800 shadow-sm'
                                 : 'text-gray-600 hover:text-gray-900'
                                 }`}
                         >
-                            <Calendar size={18} />
-                            Calendar
+                            <Calendar size={16} />
+                            <span className="hidden sm:inline">Calendar</span>
                         </button>
                     </div>
                     <button
                         onClick={fetchAppointments}
-                        className="flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all"
+                        className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 text-white rounded-lg transition-all text-xs md:text-sm"
                         style={{ backgroundColor: "#3D2B1F" }}
                         disabled={loading}
                     >
-                        {loading ? <Loader2 size={18} className="animate-spin" /> : <Calendar size={18} />}
-                        Refresh
+                        {loading ? <Loader2 size={16} className="animate-spin" /> : <Calendar size={16} />}
+                        <span className="hidden sm:inline">Refresh</span>
                     </button>
                 </div>
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4 mb-4 md:mb-6 space-y-3 md:space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Stylist</label>
+                        <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Filter by Stylist</label>
                         <select
                             value={filterStylist}
                             onChange={(e) => setFilterStylist(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
+                            className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
                         >
                             <option value="all">All Stylists</option>
                             {stylists.map(s => (
@@ -868,13 +868,13 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage }) => {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Search Customer</label>
+                        <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Search Customer</label>
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Name or email..."
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
+                            className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
                         />
                     </div>
                 </div>
@@ -973,8 +973,26 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage }) => {
     );
 };
 
+
 const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [calendarViewMode, setCalendarViewMode] = useState('week'); // 'month', 'week', 'day'
+
+    // Helper functions
+    const getWeekDays = (date) => {
+        const day = date.getDay();
+        const diff = date.getDate() - day; // Get Monday
+        const monday = new Date(date);
+        monday.setDate(diff);
+
+        const week = [];
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(monday);
+            d.setDate(monday.getDate() + i);
+            week.push(d);
+        }
+        return week;
+    };
 
     const getDaysInMonth = (date) => {
         const year = date.getFullYear();
@@ -985,11 +1003,9 @@ const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment }) 
         const startingDayOfWeek = firstDay.getDay();
 
         const days = [];
-        // Add empty cells for days before the first of the month
         for (let i = 0; i < startingDayOfWeek; i++) {
             days.push(null);
         }
-        // Add all days of the month
         for (let day = 1; day <= daysInMonth; day++) {
             days.push(new Date(year, month, day));
         }
@@ -1001,15 +1017,27 @@ const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment }) 
         return appointments.filter(appt => {
             const apptDate = new Date(appt.startTime);
             return apptDate.toDateString() === date.toDateString();
+        }).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+    };
+
+    const getAppointmentsForTimeSlot = (date, hour) => {
+        const dayAppts = getAppointmentsForDay(date);
+        return dayAppts.filter(appt => {
+            const apptHour = new Date(appt.startTime).getHours();
+            return apptHour === hour;
         });
     };
 
-    const goToPreviousMonth = () => {
-        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
-    };
-
-    const goToNextMonth = () => {
-        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    const navigate = (direction) => {
+        const newDate = new Date(currentDate);
+        if (calendarViewMode === 'month') {
+            newDate.setMonth(newDate.getMonth() + direction);
+        } else if (calendarViewMode === 'week') {
+            newDate.setDate(newDate.getDate() + (direction * 7));
+        } else {
+            newDate.setDate(newDate.getDate() + direction);
+        }
+        setCurrentDate(newDate);
     };
 
     const goToToday = () => {
@@ -1022,54 +1050,40 @@ const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment }) 
         return date.toDateString() === today.toDateString();
     };
 
-    const monthYear = currentDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-    const days = getDaysInMonth(currentDate);
-    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const formatDateHeader = () => {
+        if (calendarViewMode === 'month') {
+            return currentDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+        } else if (calendarViewMode === 'week') {
+            const week = getWeekDays(currentDate);
+            const start = week[0].toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+            const end = week[6].toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            return `${start} - ${end}`;
+        } else {
+            return currentDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        }
+    };
 
-    // Stylist colors for visual distinction
+    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const timeSlots = Array.from({ length: 13 }, (_, i) => i + 8); // 8 AM to 8 PM
+
     const stylistColors = {
         'Jo': 'bg-blue-100 text-blue-800 border-blue-200',
         'Nisha': 'bg-purple-100 text-purple-800 border-purple-200',
         'default': 'bg-stone-100 text-stone-800 border-stone-200'
     };
 
-    return (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-            {/* Calendar Header */}
-            <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-gray-900">{monthYear}</h3>
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={goToToday}
-                        className="px-3 py-2 text-sm text-stone-800 hover:bg-stone-100 rounded-lg transition-all"
-                    >
-                        Today
-                    </button>
-                    <button
-                        onClick={goToPreviousMonth}
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
-                    >
-                        <ChevronLeft size={20} />
-                    </button>
-                    <button
-                        onClick={goToNextMonth}
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
-                    >
-                        <ChevronRight size={20} />
-                    </button>
-                </div>
-            </div>
+    const renderMonthView = () => {
+        const days = getDaysInMonth(currentDate);
 
-            {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-2">
-                {/* Week day headers */}
+        return (
+            <div className="grid grid-cols-7 gap-1 md:gap-2">
                 {weekDays.map(day => (
-                    <div key={day} className="text-center text-sm font-medium text-gray-600 py-2">
-                        {day}
+                    <div key={day} className="text-center text-xs md:text-sm font-medium text-gray-600 py-1 md:py-2">
+                        <span className="hidden sm:inline">{day}</span>
+                        <span className="sm:hidden">{day.substring(0, 1)}</span>
                     </div>
                 ))}
 
-                {/* Calendar days */}
                 {days.map((date, index) => {
                     const dayAppointments = getAppointmentsForDay(date);
                     const isTodayDate = isToday(date);
@@ -1077,21 +1091,17 @@ const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment }) 
                     return (
                         <div
                             key={index}
-                            className={`min-h-[120px] border rounded-lg p-2 ${!date
-                                    ? 'bg-gray-50'
-                                    : isTodayDate
-                                        ? 'bg-amber-50 border-amber-300'
-                                        : 'bg-white border-gray-200'
+                            className={`min-h-[80px] sm:min-h-[100px] md:min-h-[120px] border rounded-md md:rounded-lg p-1 md:p-2 ${!date ? 'bg-gray-50' : isTodayDate ? 'bg-amber-50 border-amber-300' : 'bg-white border-gray-200'
                                 }`}
                         >
                             {date && (
                                 <>
-                                    <div className={`text-sm font-medium mb-2 ${isTodayDate ? 'text-amber-900' : 'text-gray-700'
+                                    <div className={`text-xs md:text-sm font-medium mb-1 md:mb-2 ${isTodayDate ? 'text-amber-900' : 'text-gray-700'
                                         }`}>
                                         {date.getDate()}
                                     </div>
-                                    <div className="space-y-1">
-                                        {dayAppointments.map(appt => {
+                                    <div className="space-y-0.5 md:space-y-1">
+                                        {dayAppointments.slice(0, 3).map(appt => {
                                             const time = new Date(appt.startTime).toLocaleTimeString('en-GB', {
                                                 hour: '2-digit',
                                                 minute: '2-digit'
@@ -1101,16 +1111,21 @@ const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment }) 
                                             return (
                                                 <div
                                                     key={appt.id}
-                                                    className={`text-xs p-1.5 rounded border cursor-pointer hover:shadow-sm transition-shadow ${colorClass}`}
+                                                    className={`text-[10px] sm:text-xs p-1 sm:p-1.5 rounded border cursor-pointer hover:shadow-sm transition-shadow active:scale-95 ${colorClass}`}
                                                     onClick={() => onEditAppointment(appt)}
                                                     title={`${appt.customer.name} - ${appt.customer.service}`}
                                                 >
                                                     <div className="font-medium truncate">{time}</div>
-                                                    <div className="truncate">{appt.customer.name}</div>
-                                                    <div className="truncate text-xs opacity-75">{appt.stylist}</div>
+                                                    <div className="truncate hidden sm:block">{appt.customer.name}</div>
+                                                    <div className="truncate text-[9px] sm:text-xs opacity-75 hidden md:block">{appt.stylist}</div>
                                                 </div>
                                             );
                                         })}
+                                        {dayAppointments.length > 3 && (
+                                            <div className="text-[9px] sm:text-xs text-gray-500 text-center">
+                                                +{dayAppointments.length - 3} more
+                                            </div>
+                                        )}
                                     </div>
                                 </>
                             )}
@@ -1118,14 +1133,212 @@ const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment }) 
                     );
                 })}
             </div>
+        );
+    };
+
+    const renderWeekView = () => {
+        const week = getWeekDays(currentDate);
+
+        return (
+            <div className="overflow-x-auto">
+                <div className="min-w-[600px]">
+                    {/* Header */}
+                    <div className="grid grid-cols-8 gap-1 mb-2">
+                        <div className="text-xs font-medium text-gray-600 p-2">Time</div>
+                        {week.map((date, i) => {
+                            const isTodayDate = isToday(date);
+                            return (
+                                <div key={i} className={`text-center p-2 rounded-t-lg ${isTodayDate ? 'bg-amber-100' : 'bg-gray-50'
+                                    }`}>
+                                    <div className="text-xs font-medium text-gray-600">{weekDays[date.getDay()]}</div>
+                                    <div className={`text-sm font-semibold ${isTodayDate ? 'text-amber-900' : 'text-gray-900'}`}>
+                                        {date.getDate()}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Time slots */}
+                    <div className="space-y-1">
+                        {timeSlots.map(hour => (
+                            <div key={hour} className="grid grid-cols-8 gap-1">
+                                <div className="text-xs text-gray-600 p-2 font-medium">
+                                    {hour}:00
+                                </div>
+                                {week.map((date, i) => {
+                                    const slotAppts = getAppointmentsForTimeSlot(date, hour);
+                                    const isTodayDate = isToday(date);
+
+                                    return (
+                                        <div key={i} className={`min-h-[60px] border rounded p-1 ${isTodayDate ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-200'
+                                            }`}>
+                                            {slotAppts.map(appt => {
+                                                const colorClass = stylistColors[appt.stylist] || stylistColors.default;
+                                                const time = new Date(appt.startTime).toLocaleTimeString('en-GB', {
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                });
+
+                                                return (
+                                                    <div
+                                                        key={appt.id}
+                                                        className={`text-xs p-2 rounded border cursor-pointer hover:shadow-md transition-all mb-1 ${colorClass}`}
+                                                        onClick={() => onEditAppointment(appt)}
+                                                    >
+                                                        <div className="font-semibold">{time}</div>
+                                                        <div className="truncate font-medium">{appt.customer.name}</div>
+                                                        <div className="truncate text-xs opacity-75">{appt.customer.service}</div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const renderDayView = () => {
+        const dayAppts = getAppointmentsForDay(currentDate);
+        const isTodayDate = isToday(currentDate);
+
+        return (
+            <div className="max-w-2xl mx-auto">
+                <div className={`text-center p-4 rounded-lg mb-4 ${isTodayDate ? 'bg-amber-100' : 'bg-gray-50'
+                    }`}>
+                    <div className="text-sm text-gray-600">{weekDays[currentDate.getDay()]}</div>
+                    <div className={`text-2xl font-bold ${isTodayDate ? 'text-amber-900' : 'text-gray-900'}`}>
+                        {currentDate.getDate()}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                        {currentDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    {timeSlots.map(hour => {
+                        const slotAppts = getAppointmentsForTimeSlot(currentDate, hour);
+
+                        return (
+                            <div key={hour} className="flex gap-3">
+                                <div className="w-20 text-sm text-gray-600 font-medium pt-2">
+                                    {hour}:00
+                                </div>
+                                <div className={`flex-1 min-h-[60px] border rounded-lg p-2 ${isTodayDate ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-200'
+                                    }`}>
+                                    {slotAppts.map(appt => {
+                                        const colorClass = stylistColors[appt.stylist] || stylistColors.default;
+                                        const time = new Date(appt.startTime).toLocaleTimeString('en-GB', {
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        });
+
+                                        return (
+                                            <div
+                                                key={appt.id}
+                                                className={`p-3 rounded-lg border cursor-pointer hover:shadow-md transition-all mb-2 ${colorClass}`}
+                                                onClick={() => onEditAppointment(appt)}
+                                            >
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="font-semibold text-sm">{time}</span>
+                                                    <span className="text-xs px-2 py-1 rounded bg-white bg-opacity-50">
+                                                        {appt.stylist}
+                                                    </span>
+                                                </div>
+                                                <div className="font-medium">{appt.customer.name}</div>
+                                                <div className="text-sm opacity-75">{appt.customer.service}</div>
+                                                {appt.customer.phone && (
+                                                    <div className="text-xs mt-1 opacity-75">{appt.customer.phone}</div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-6">
+            {/* Calendar Header */}
+            <div className="flex flex-col gap-3 mb-4 md:mb-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <h3 className="text-lg md:text-xl font-semibold text-gray-900">{formatDateHeader()}</h3>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={goToToday}
+                            className="px-3 py-2 text-xs md:text-sm text-stone-800 hover:bg-stone-100 rounded-lg transition-all"
+                        >
+                            Today
+                        </button>
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
+                        >
+                            <ChevronLeft size={20} />
+                        </button>
+                        <button
+                            onClick={() => navigate(1)}
+                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
+                        >
+                            <ChevronRight size={20} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* View Mode Selector */}
+                <div className="flex bg-gray-100 rounded-lg p-1 w-full sm:w-auto">
+                    <button
+                        onClick={() => setCalendarViewMode('day')}
+                        className={`flex-1 sm:flex-none px-3 py-2 rounded-md transition-all text-xs md:text-sm ${calendarViewMode === 'day'
+                                ? 'bg-white text-stone-800 shadow-sm font-medium'
+                                : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                    >
+                        Day
+                    </button>
+                    <button
+                        onClick={() => setCalendarViewMode('week')}
+                        className={`flex-1 sm:flex-none px-3 py-2 rounded-md transition-all text-xs md:text-sm ${calendarViewMode === 'week'
+                                ? 'bg-white text-stone-800 shadow-sm font-medium'
+                                : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                    >
+                        Week
+                    </button>
+                    <button
+                        onClick={() => setCalendarViewMode('month')}
+                        className={`flex-1 sm:flex-none px-3 py-2 rounded-md transition-all text-xs md:text-sm ${calendarViewMode === 'month'
+                                ? 'bg-white text-stone-800 shadow-sm font-medium'
+                                : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                    >
+                        Month
+                    </button>
+                </div>
+            </div>
+
+            {/* Calendar Content */}
+            {calendarViewMode === 'month' && renderMonthView()}
+            {calendarViewMode === 'week' && renderWeekView()}
+            {calendarViewMode === 'day' && renderDayView()}
 
             {/* Legend */}
-            <div className="flex items-center gap-4 mt-6 pt-4 border-t border-gray-200">
-                <span className="text-sm text-gray-600">Stylists:</span>
+            <div className="flex flex-wrap items-center gap-2 md:gap-4 mt-4 md:mt-6 pt-3 md:pt-4 border-t border-gray-200">
+                <span className="text-xs md:text-sm text-gray-600">Stylists:</span>
                 {Object.entries(stylistColors).filter(([key]) => key !== 'default').map(([stylist, colorClass]) => (
-                    <div key={stylist} className="flex items-center gap-2">
-                        <div className={`w-4 h-4 rounded border ${colorClass}`}></div>
-                        <span className="text-sm text-gray-700">{stylist}</span>
+                    <div key={stylist} className="flex items-center gap-1 md:gap-2">
+                        <div className={`w-3 h-3 md:w-4 md:h-4 rounded border ${colorClass}`}></div>
+                        <span className="text-xs md:text-sm text-gray-700">{stylist}</span>
                     </div>
                 ))}
             </div>
