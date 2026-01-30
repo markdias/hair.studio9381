@@ -212,9 +212,17 @@ button {
     box-sizing: border-box !important;
   }
 
-  /* Ensure all sections are centered */
-  section {
-    text-align: center !important;
+  /* Price list should maintain left/right alignment */
+  .pricing-item {
+    text-align: left !important;
+  }
+
+  .pricing-item span:first-child {
+    text-align: left !important;
+  }
+
+  .pricing-item span:last-child {
+    text-align: right !important;
   }
 
   /* Center booking buttons */
