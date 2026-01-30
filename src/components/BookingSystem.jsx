@@ -1,0 +1,321 @@
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Calendar as CalendarIcon, Clock, User, Scissors, Check, ChevronRight, ChevronLeft, Phone, Mail } from 'lucide-react';
+
+const stylists = [
+    { name: 'Jo', role: 'Owner & Creative Director', img: '/jo.png' },
+    { name: 'Viktor', role: 'Master Stylist', img: '/viktor.png' },
+    { name: 'Nisha', role: 'Senior Stylist', img: '/nisha.png' },
+];
+
+const categories = [
+    { title: "CUT & STYLING", items: ["Wash cut & blowdry", "Wash & cut", "Wash & blowdry", "Styling", "Hair Up"] },
+    { title: "COLOURING", items: ["T-section highlights", "Half head highlights", "Full head highlights", "Balyage", "Full head tint"] },
+    { title: "TREATMENTS", items: ["Keratin blowdry", "Hair Botox", "Olaplex"] },
+];
+
+const timeSlots = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+
+const BookingSystem = () => {
+    const [step, setStep] = useState(1);
+    const [booking, setBooking] = useState({
+        stylist: null,
+        service: null,
+        date: null,
+        time: null,
+        name: '',
+        email: '',
+        phone: ''
+    });
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+
+    const nextStep = () => setStep(s => s + 1);
+    const prevStep = () => setStep(s => s - 1);
+
+    const handleBooking = () => {
+        setIsSubmitting(true);
+        setTimeout(() => {
+            setIsSubmitting(false);
+            setIsSuccess(true);
+        }, 2000);
+    };
+
+    const containerVariants = {
+        hidden: { opacity: 0, x: 20 },
+        visible: { opacity: 1, x: 0, transition: { duration: 0.5 } },
+        exit: { opacity: 0, x: -20, transition: { duration: 0.5 } }
+    };
+
+    return (
+        <section id="booking" style={{
+            padding: '120px 0',
+            backgroundColor: '#F5F1ED',
+            minHeight: '800px'
+        }}>
+            <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px' }}>
+                <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+                    <h2 style={{ fontSize: 'clamp(2.5rem, 8vw, 4rem)', color: '#3D2B1F', marginBottom: '15px' }}>Book Your Visit</h2>
+                    <div style={{ width: '60px', height: '2px', backgroundColor: '#3D2B1F', margin: '0 auto' }}></div>
+                </div>
+
+                <div style={{
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '20px',
+                    boxShadow: '0 40px 100px rgba(61, 43, 31, 0.08)',
+                    overflow: 'hidden',
+                    display: 'grid',
+                    gridTemplateColumns: 'minmax(300px, 1fr) 2fr',
+                    minHeight: '600px'
+                }} className="booking-card">
+
+                    <div style={{
+                        backgroundColor: '#3D2B1F',
+                        padding: '60px 40px',
+                        color: '#EAE0D5',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between'
+                    }}>
+                        <div>
+                            <h3 style={{ fontSize: '1.8rem', marginBottom: '30px', color: '#FFF' }}>Your Selection</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+                                <SelectionItem icon={<User size={20} />} label="Stylist" value={booking.stylist?.name || 'Not selected'} />
+                                <SelectionItem icon={<Scissors size={20} />} label="Service" value={booking.service || 'Not selected'} />
+                                <SelectionItem icon={<CalendarIcon size={20} />} label="Date" value={booking.date || 'Not selected'} />
+                                <SelectionItem icon={<Clock size={20} />} label="Time" value={booking.time || 'Not selected'} />
+                            </div>
+                        </div>
+                        <div style={{ opacity: 0.6, fontSize: '0.9rem' }}>
+                            Step {step} of 4
+                            <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(234, 224, 213, 0.1)', marginTop: '10px', borderRadius: '2px' }}>
+                                <div style={{ width: `${(step / 4) * 100}%`, height: '100%', backgroundColor: '#EAE0D5', transition: 'width 0.5s ease' }}></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ padding: '60px', position: 'relative' }}>
+                        <AnimatePresence mode="wait">
+                            {isSuccess ? (
+                                <motion.div key="success" variants={containerVariants} initial="hidden" animate="visible" style={{ textAlign: 'center', paddingTop: '60px' }}>
+                                    <div style={{ width: '80px', height: '80px', backgroundColor: '#3D2B1F', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 30px' }}>
+                                        <Check color="#EAE0D5" size={40} />
+                                    </div>
+                                    <h3 style={{ fontSize: '2.5rem', color: '#3D2B1F', marginBottom: '15px' }}>Booking Confirmed!</h3>
+                                    <p style={{ color: '#666', marginBottom: '40px' }}>We've sent a confirmation email to {booking.email}.</p>
+                                    <button
+                                        onClick={() => { setIsSuccess(false); setStep(1); setBooking({}); }}
+                                        className="btn-primary"
+                                    >
+                                        Book Another
+                                    </button>
+                                </motion.div>
+                            ) : (
+                                <motion.div key={step} variants={containerVariants} initial="hidden" animate="visible" exit="exit" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+
+                                    {step === 1 && (
+                                        <div style={{ flex: 1 }}>
+                                            <h4 style={{ fontSize: '1.5rem', marginBottom: '30px' }}>Choose Your Stylist</h4>
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '20px' }}>
+                                                {stylists.map((s) => (
+                                                    <button
+                                                        key={s.name}
+                                                        onClick={() => { setBooking({ ...booking, stylist: s }); nextStep(); }}
+                                                        style={{
+                                                            padding: '20px',
+                                                            borderRadius: '12px',
+                                                            border: booking.stylist?.name === s.name ? '2px solid #3D2B1F' : '2px solid transparent',
+                                                            backgroundColor: booking.stylist?.name === s.name ? '#F5F1ED' : '#F9F9F9',
+                                                            transition: 'all 0.3s ease',
+                                                            textAlign: 'center',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                    >
+                                                        <img src={s.img} alt={s.name} style={{ width: '80px', height: '80px', borderRadius: '50%', marginBottom: '15px', objectFit: 'cover' }} />
+                                                        <div style={{ fontWeight: '700', color: '#3D2B1F' }}>{s.name}</div>
+                                                        <div style={{ fontSize: '0.8rem', color: '#666' }}>{s.role.split(' ')[0]}</div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {step === 2 && (
+                                        <div style={{ flex: 1 }}>
+                                            <h4 style={{ fontSize: '1.5rem', marginBottom: '30px' }}>Select a Service</h4>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                                                {categories.map((cat) => (
+                                                    <div key={cat.title}>
+                                                        <div style={{ fontSize: '0.8rem', letterSpacing: '2px', color: '#999', marginBottom: '15px' }}>{cat.title}</div>
+                                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                                            {cat.items.map(item => (
+                                                                <button
+                                                                    key={item}
+                                                                    onClick={() => setBooking({ ...booking, service: item })}
+                                                                    style={{
+                                                                        padding: '10px 20px',
+                                                                        borderRadius: '30px',
+                                                                        border: '1px solid #EAE0D5',
+                                                                        backgroundColor: booking.service === item ? '#3D2B1F' : 'white',
+                                                                        color: booking.service === item ? '#FFF' : '#3D2B1F',
+                                                                        fontSize: '0.9rem',
+                                                                        transition: 'all 0.2s ease',
+                                                                        cursor: 'pointer'
+                                                                    }}
+                                                                >
+                                                                    {item}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {step === 3 && (
+                                        <div style={{ flex: 1 }}>
+                                            <h4 style={{ fontSize: '1.5rem', marginBottom: '10px' }}>Date & Time</h4>
+                                            <p style={{ color: '#666', marginBottom: '30px', fontSize: '0.9rem' }}>Select your preferred date to see available time slots.</p>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                                                <div style={{ position: 'relative' }}>
+                                                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#3D2B1F', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                                        Pick a Date
+                                                    </label>
+                                                    <div style={{ position: 'relative' }}>
+                                                        <CalendarIcon size={18} style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#999', pointerEvents: 'none' }} />
+                                                        <input
+                                                            type="date"
+                                                            min={new Date().toISOString().split('T')[0]}
+                                                            onChange={(e) => setBooking({ ...booking, date: e.target.value })}
+                                                            value={booking.date || ''}
+                                                            style={{
+                                                                width: '100%',
+                                                                padding: '15px 15px 15px 45px',
+                                                                borderRadius: '12px',
+                                                                border: '1px solid #EAE0D5',
+                                                                fontSize: '1rem',
+                                                                color: '#3D2B1F',
+                                                                backgroundColor: '#FFF',
+                                                                cursor: 'pointer',
+                                                                outline: 'none',
+                                                                boxSizing: 'border-box'
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#3D2B1F', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                                        Available Time Slots
+                                                    </label>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+                                                        {timeSlots.map(t => (
+                                                            <button
+                                                                key={t}
+                                                                onClick={() => setBooking({ ...booking, time: t })}
+                                                                style={{
+                                                                    padding: '12px 0',
+                                                                    borderRadius: '10px',
+                                                                    border: booking.time === t ? '2px solid #3D2B1F' : '1px solid #EAE0D5',
+                                                                    backgroundColor: booking.time === t ? '#3D2B1F' : 'white',
+                                                                    color: booking.time === t ? '#FFF' : '#3D2B1F',
+                                                                    fontWeight: booking.time === t ? '700' : '400',
+                                                                    fontSize: '0.9rem',
+                                                                    transition: 'all 0.2s ease',
+                                                                    cursor: 'pointer'
+                                                                }}
+                                                            >
+                                                                {t}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {step === 4 && (
+                                        <div style={{ flex: 1 }}>
+                                            <h4 style={{ fontSize: '1.5rem', marginBottom: '30px' }}>Contact Details</h4>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                                <div style={{ position: 'relative' }}>
+                                                    <User size={18} style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#999' }} />
+                                                    <input
+                                                        type="text" placeholder="Full Name"
+                                                        value={booking.name} onChange={(e) => setBooking({ ...booking, name: e.target.value })}
+                                                        style={{ padding: '15px 15px 15px 45px', width: '100%', border: '1px solid #EAE0D5', borderRadius: '8px', boxSizing: 'border-box' }}
+                                                    />
+                                                </div>
+                                                <div style={{ position: 'relative' }}>
+                                                    <Mail size={18} style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#999' }} />
+                                                    <input
+                                                        type="email" placeholder="Email Address"
+                                                        value={booking.email} onChange={(e) => setBooking({ ...booking, email: e.target.value })}
+                                                        style={{ padding: '15px 15px 15px 45px', width: '100%', border: '1px solid #EAE0D5', borderRadius: '8px', boxSizing: 'border-box' }}
+                                                    />
+                                                </div>
+                                                <div style={{ position: 'relative' }}>
+                                                    <Phone size={18} style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#999' }} />
+                                                    <input
+                                                        type="tel" placeholder="Phone Number"
+                                                        value={booking.phone} onChange={(e) => setBooking({ ...booking, phone: e.target.value })}
+                                                        style={{ padding: '15px 15px 15px 45px', width: '100%', border: '1px solid #EAE0D5', borderRadius: '8px', boxSizing: 'border-box' }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '40px' }}>
+                                        {step > 1 && (
+                                            <button onClick={prevStep} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#3D2B1F', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>
+                                                <ChevronLeft size={20} /> Back
+                                            </button>
+                                        )}
+                                        <div style={{ marginLeft: 'auto' }}>
+                                            {step < 4 ? (
+                                                <button
+                                                    onClick={nextStep}
+                                                    disabled={(step === 2 && !booking.service) || (step === 3 && (!booking.date || !booking.time))}
+                                                    className="btn-primary"
+                                                    style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: ((step === 2 && !booking.service) || (step === 3 && (!booking.date || !booking.time))) ? 0.5 : 1 }}
+                                                >
+                                                    Next Step <ChevronRight size={20} />
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={handleBooking}
+                                                    disabled={!booking.name || !booking.email || isSubmitting}
+                                                    className="btn-primary"
+                                                    style={{ opacity: (!booking.name || !booking.email || isSubmitting) ? 0.5 : 1 }}
+                                                >
+                                                    {isSubmitting ? 'Confirming...' : 'Confirm Booking'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+const SelectionItem = ({ icon, label, value }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <div style={{ width: '40px', height: '40px', backgroundColor: 'rgba(234, 224, 213, 0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {icon}
+        </div>
+        <div>
+            <div style={{ fontSize: '0.75rem', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</div>
+            <div style={{ fontWeight: '600', fontSize: '1rem' }}>{value}</div>
+        </div>
+    </div>
+);
+
+export default BookingSystem;

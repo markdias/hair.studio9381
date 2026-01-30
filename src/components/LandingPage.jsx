@@ -367,36 +367,6 @@ const PriceList = () => {
     );
 };
 
-const BookingSection = () => {
-    return (
-        <section id="booking" style={{
-            padding: '120px 50px',
-            backgroundColor: '#3D2B1F',
-            color: '#EAE0D5',
-            textAlign: 'center'
-        }}>
-            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-                <h2 style={{ fontSize: '3.5rem', marginBottom: '30px', color: '#FFF' }}>Ready for Your Transformation?</h2>
-                <p style={{ fontSize: '1.2rem', marginBottom: '50px', opacity: 0.9, lineHeight: '1.8' }}>
-                    Join us at Hair Studio 938 for a luxury experience tailored to you. Whether it's a fresh cut, a bold color change, or a complete makeover, our experts are ready to make your hair dreams come true.
-                </p>
-                <div className="booking-buttons" style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                    <a href="https://www.instagram.com/hair.studio938/" target="_blank" className="btn-primary" style={{ backgroundColor: '#EAE0D5', color: '#3D2B1F', padding: '16px 40px', fontSize: '1.1rem' }}>
-                        Book via Instagram DM
-                    </a>
-                    <a href="tel:+442084451234" className="btn-primary" style={{ border: '1px solid #EAE0D5', backgroundColor: 'transparent', padding: '16px 40px', fontSize: '1.1rem' }}>
-                        Call the Salon
-                    </a>
-                </div>
-                <p style={{ marginTop: '40px', opacity: 0.7, fontSize: '0.9rem' }}>
-                    <MapPin size={16} style={{ verticalAlign: 'middle', marginRight: '8px' }} />
-                    938 High Road, London, N12 9RT
-                </p>
-            </div>
-        </section>
-    );
-};
-
 const Footer = () => {
     return (
         <footer style={{ padding: '80px 50px', backgroundColor: '#3D2B1F', color: '#EAE0D5' }}>
@@ -433,4 +403,4 @@ const Footer = () => {
     );
 };
 
-export { Navbar, Hero, Services, TeamSection, PriceList, BookingSection, Footer };
+export { Navbar, Hero, Services, TeamSection, PriceList, Footer };

@@ -243,6 +243,18 @@ button {
     width: 100% !important;
     max-width: 280px !important;
   }
+
+  .booking-card {
+    grid-template-columns: 1fr !important;
+  }
+
+  .booking-card>div:first-child {
+    padding: 30px 20px !important;
+  }
+
+  .booking-card>div:last-child {
+    padding: 30px 20px !important;
+  }
 }
 
 .mobile-menu-toggle {
