@@ -1,3 +1,13 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-brown: #3D2B1F;
+  --color-primary-brown-hover: #4D3B2F;
+  --color-accent-cream: #EAE0D5;
+  --color-soft-cream: #F5F1ED;
+  --color-text-dark: #2A1D15;
+}
+
 :root {
   --primary-brown: #3D2B1F;
   --accent-cream: #EAE0D5;
