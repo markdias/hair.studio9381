@@ -607,46 +607,51 @@ const BrandingEditor = ({ settings, onSave, showMessage }) => {
                     <ImageUploader folder="branding" onUpload={handleLogoUpload} showMessage={showMessage} />
                 </div>
 
-                <AnimatePresence>
-                    {showResizer && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="flex-grow w-full overflow-hidden"
+                <div className="flex-grow w-full">
+                    <div className={`relative rounded-lg p-8 flex items-center justify-center min-h-[300px] transition-all ${showResizer ? 'border border-dashed border-gray-300 bg-stone-50' : 'bg-transparent'}`}>
+                        <div
+                            className="relative shadow-xl rounded-full bg-white flex items-center justify-center overflow-hidden border border-gray-100"
+                            style={{ width: `${size}px`, height: `${size}px` }}
                         >
-                            <p className="text-sm text-gray-500 mb-4">Visual Resizer (Drag bottom-right corner):</p>
-                            <div className="relative border border-dashed border-gray-300 rounded-lg p-8 bg-stone-50 flex items-center justify-center min-h-[300px]">
+                            <img src={logoUrl} alt="Logo Preview" className="w-full h-full object-cover" />
+
+                            {showResizer && (
                                 <div
-                                    className="relative shadow-xl rounded-full bg-white flex items-center justify-center overflow-hidden border border-gray-100"
-                                    style={{ width: `${size}px`, height: `${size}px` }}
+                                    onMouseDown={handleResizeStart}
+                                    className="absolute bottom-0 right-0 w-4 h-4 bg-stone-800 cursor-nwse-resize flex items-center justify-center hover:scale-125 transition-transform"
+                                    style={{ backgroundColor: '#3D2B1F' }}
                                 >
-                                    <img src={logoUrl} alt="Logo Preview" className="w-full h-full object-cover" />
-
-                                    <div
-                                        onMouseDown={handleResizeStart}
-                                        className="absolute bottom-0 right-0 w-4 h-4 bg-stone-800 cursor-nwse-resize flex items-center justify-center hover:scale-125 transition-transform"
-                                        style={{ backgroundColor: '#3D2B1F' }}
-                                    >
-                                        <div className="w-1 h-1 bg-white rounded-full"></div>
-                                    </div>
+                                    <div className="w-1 h-1 bg-white rounded-full"></div>
                                 </div>
+                            )}
+                        </div>
 
-                                <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full text-xs font-mono border border-gray-200 text-gray-500">
-                                    {size}px
-                                </div>
+                        {showResizer && (
+                            <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full text-xs font-mono border border-gray-200 text-gray-500">
+                                {size}px
                             </div>
+                        )}
+                    </div>
 
-                            <button
-                                onClick={saveSize}
-                                className="mt-4 px-6 py-2 bg-stone-800 text-white rounded-lg hover:bg-opacity-90 transition-all font-medium flex items-center gap-2"
-                                style={{ backgroundColor: '#3D2B1F' }}
+                    <AnimatePresence>
+                        {showResizer && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
                             >
-                                <Save size={16} /> Save Logo Size
-                            </button>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                                <button
+                                    onClick={saveSize}
+                                    className="mt-4 px-6 py-2 bg-stone-800 text-white rounded-lg hover:bg-opacity-90 transition-all font-medium flex items-center gap-2"
+                                    style={{ backgroundColor: '#3D2B1F' }}
+                                >
+                                    <Save size={16} /> Save Logo Size
+                                </button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
         </div>
     );
