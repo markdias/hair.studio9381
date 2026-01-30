@@ -111,7 +111,8 @@ const Hero = () => {
                     zIndex: 2,
                     textAlign: 'center',
                     maxWidth: '800px',
-                    padding: '0 20px'
+                    padding: '0 15px',
+                    boxSizing: 'border-box'
                 }}
             >
                 <h1 className="responsive-title" style={{ fontSize: '5rem', marginBottom: '1rem', lineHeight: '1' }}>Where Hair Dreams Come True</h1>
@@ -302,9 +303,10 @@ const PriceList = () => {
                     backgroundColor: '#EDE4DB',
                     maxWidth: '900px',
                     width: '100%',
-                    padding: '80px 100px',
+                    padding: '60px 20px',
                     boxShadow: '0 20px 50px rgba(0,0,0,0.05)',
-                    position: 'relative'
+                    position: 'relative',
+                    boxSizing: 'border-box'
                 }}
             >
                 <h2 className="price-list-title" style={{
