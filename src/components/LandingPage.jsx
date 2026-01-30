@@ -119,8 +119,8 @@ const Hero = () => {
                 <p className="responsive-p" style={{ fontSize: '1.25rem', marginBottom: '2.5rem', letterSpacing: '2px', fontWeight: '300', opacity: 0.9 }}>
                     Luxury hair styling and bespoke treatments at 938 High Road.
                 </p>
-                <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
-                    <a href="#booking" className="btn-primary" style={{ textDecoration: 'none' }}>Book Now</a>
+                <div className="hero-buttons" style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap', width: '100%' }}>
+                    <a href="#booking" className="btn-primary" style={{ textDecoration: 'none', flex: '0 1 auto' }}>Book Now</a>
                     <a href="#services" style={{
                         border: '1px solid #FFFFFF',
                         color: '#FFFFFF',
@@ -129,7 +129,8 @@ const Hero = () => {
                         textTransform: 'uppercase',
                         letterSpacing: '1px',
                         fontWeight: '600',
-                        textDecoration: 'none'
+                        textDecoration: 'none',
+                        flex: '0 1 auto'
                     }}>
                         Our Services
                     </a>
@@ -374,7 +375,7 @@ const BookingSection = () => {
                 <p style={{ fontSize: '1.2rem', marginBottom: '50px', opacity: 0.9, lineHeight: '1.8' }}>
                     Join us at Hair Studio 938 for a luxury experience tailored to you. Whether it's a fresh cut, a bold color change, or a complete makeover, our experts are ready to make your hair dreams come true.
                 </p>
-                <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <div className="booking-buttons" style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
                     <a href="https://www.instagram.com/hair.studio938/" target="_blank" className="btn-primary" style={{ backgroundColor: '#EAE0D5', color: '#3D2B1F', padding: '16px 40px', fontSize: '1.1rem' }}>
                         Book via Instagram DM
                     </a>

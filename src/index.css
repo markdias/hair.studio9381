@@ -194,6 +194,36 @@ button {
     padding: 0 !important;
     margin: 0 auto !important;
   }
+
+  /* Center hero buttons on mobile */
+  .hero-buttons {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 15px !important;
+  }
+
+  .hero-buttons a {
+    width: 100% !important;
+    max-width: 280px !important;
+    text-align: center !important;
+    display: block !important;
+  }
+
+  /* Ensure all sections are centered */
+  section {
+    text-align: center !important;
+  }
+
+  /* Center booking buttons */
+  .booking-buttons {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  .booking-buttons a {
+    width: 100% !important;
+    max-width: 280px !important;
+  }
 }
 
 .mobile-menu-toggle {
