@@ -73,7 +73,7 @@ const Gallery = () => {
                         fontSize: 'clamp(2.5rem, 8vw, 4rem)',
                         color: '#EAE0D5',
                         marginBottom: '15px'
-                    }}>Instagram Feed</h2>
+                    }}>Gallery</h2>
                     <div style={{ width: '60px', height: '2px', backgroundColor: '#EAE0D5', margin: '0 auto 20px' }}></div>
                     <a
                         href="https://www.instagram.com/hair.studio938/"

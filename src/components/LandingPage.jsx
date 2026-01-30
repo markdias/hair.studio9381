@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Instagram, MapPin, Phone, Calendar, Menu, X } from 'lucide-react';
+import { Instagram, MapPin, Phone, Calendar, Menu, X, Mail, MessageCircle } from 'lucide-react';
 
 const Navbar = () => {
     const [isScrolled, setIsScrolled] = useState(false);
@@ -367,6 +367,62 @@ const PriceList = () => {
     );
 };
 
+const Contact = () => {
+    return (
+        <section id="contact" style={{
+            padding: '120px 20px',
+            backgroundColor: '#3D2B1F',
+            color: '#EAE0D5',
+            textAlign: 'center'
+        }}>
+            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                <h2 style={{ fontSize: 'clamp(2.5rem, 8vw, 4rem)', color: '#FFF', marginBottom: '15px' }}>Contact Us</h2>
+                <div style={{ width: '60px', height: '2px', backgroundColor: '#EAE0D5', margin: '0 auto 40px' }}></div>
+
+                <div className="contact-grid" style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                    gap: '40px',
+                    marginTop: '60px'
+                }}>
+                    <ContactItem
+                        icon={<Phone size={24} />}
+                        label="Call Us"
+                        value="07376 168558"
+                        link="tel:07376168558"
+                    />
+                    <ContactItem
+                        icon={<MessageCircle size={24} />}
+                        label="WhatsApp"
+                        value="07376 168558"
+                        link="https://wa.me/447376168558"
+                    />
+                    <ContactItem
+                        icon={<Mail size={24} />}
+                        label="Email"
+                        value="hairs.studio938@gmail.com"
+                        link="mailto:hairs.studio938@gmail.com"
+                    />
+                </div>
+
+                <div style={{ marginTop: '80px', opacity: 0.8 }}>
+                    <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '1.1rem' }}>
+                        <MapPin size={20} /> 938 High Road, London, N12 9RT
+                    </p>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+const ContactItem = ({ icon, label, value, link }) => (
+    <div style={{ padding: '30px', backgroundColor: 'rgba(234, 224, 213, 0.05)', borderRadius: '12px' }}>
+        <div style={{ color: '#EAE0D5', marginBottom: '15px', display: 'flex', justifyContent: 'center' }}>{icon}</div>
+        <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', opacity: 0.6, marginBottom: '5px' }}>{label}</div>
+        <a href={link} style={{ color: '#FFF', fontSize: '1.2rem', fontWeight: '600', textDecoration: 'none' }}>{value}</a>
+    </div>
+);
+
 const Footer = () => {
     return (
         <footer style={{ padding: '80px 50px', backgroundColor: '#3D2B1F', color: '#EAE0D5' }}>
@@ -403,4 +459,4 @@ const Footer = () => {
     );
 };
 
-export { Navbar, Hero, Services, TeamSection, PriceList, Footer };
+export { Navbar, Hero, Services, TeamSection, PriceList, Contact, Footer };

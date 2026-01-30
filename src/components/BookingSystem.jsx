@@ -210,7 +210,10 @@ const BookingSystem = () => {
                                                     <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#3D2B1F', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
                                                         Available Time Slots
                                                     </label>
-                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+                                                    <div className="booking-time-grid" style={{
+                                                        display: 'grid',
+                                                        gap: '12px'
+                                                    }}>
                                                         {timeSlots.map(t => (
                                                             <button
                                                                 key={t}
@@ -245,7 +248,7 @@ const BookingSystem = () => {
                                                     <input
                                                         type="text" placeholder="Full Name"
                                                         value={booking.name} onChange={(e) => setBooking({ ...booking, name: e.target.value })}
-                                                        style={{ padding: '15px 15px 15px 45px', width: '100%', border: '1px solid #EAE0D5', borderRadius: '8px', boxSizing: 'border-box' }}
+                                                        style={{ padding: '15px 15px 15px 45px', width: '100%', border: '1px solid #EAE0D5', borderRadius: '8px', boxSizing: 'border-box', maxWidth: '100%' }}
                                                     />
                                                 </div>
                                                 <div style={{ position: 'relative' }}>
@@ -253,7 +256,7 @@ const BookingSystem = () => {
                                                     <input
                                                         type="email" placeholder="Email Address"
                                                         value={booking.email} onChange={(e) => setBooking({ ...booking, email: e.target.value })}
-                                                        style={{ padding: '15px 15px 15px 45px', width: '100%', border: '1px solid #EAE0D5', borderRadius: '8px', boxSizing: 'border-box' }}
+                                                        style={{ padding: '15px 15px 15px 45px', width: '100%', border: '1px solid #EAE0D5', borderRadius: '8px', boxSizing: 'border-box', maxWidth: '100%' }}
                                                     />
                                                 </div>
                                                 <div style={{ position: 'relative' }}>
@@ -261,7 +264,7 @@ const BookingSystem = () => {
                                                     <input
                                                         type="tel" placeholder="Phone Number"
                                                         value={booking.phone} onChange={(e) => setBooking({ ...booking, phone: e.target.value })}
-                                                        style={{ padding: '15px 15px 15px 45px', width: '100%', border: '1px solid #EAE0D5', borderRadius: '8px', boxSizing: 'border-box' }}
+                                                        style={{ padding: '15px 15px 15px 45px', width: '100%', border: '1px solid #EAE0D5', borderRadius: '8px', boxSizing: 'border-box', maxWidth: '100%' }}
                                                     />
                                                 </div>
                                             </div>

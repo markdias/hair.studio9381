@@ -255,6 +255,14 @@ button {
   .booking-card>div:last-child {
     padding: 30px 20px !important;
   }
+
+  .booking-time-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+.booking-time-grid {
+  grid-template-columns: repeat(4, 1fr);
 }
 
 .mobile-menu-toggle {
