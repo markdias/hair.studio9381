@@ -1708,14 +1708,14 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                                         </div>
                                                     ))
                                                 ) : (
-                                                    <div className="p-3 text-sm text-center">
-                                                        <p className="text-gray-500 mb-2">No clients found</p>
+                                                    <div className="p-3">
                                                         <button
                                                             type="button"
                                                             onClick={() => setIsAddingNewClient(true)}
-                                                            className="text-sm bg-[#3D2B1F] text-white px-4 py-2 rounded-md hover:bg-opacity-90 w-full font-medium"
+                                                            className="w-full text-sm bg-[#3D2B1F] text-white px-4 py-2.5 rounded-md hover:bg-opacity-90 font-medium flex items-center justify-center gap-2"
                                                         >
-                                                            + Add "{clientSearch}"
+                                                            <Plus size={16} />
+                                                            Create New Client "{clientSearch}"
                                                         </button>
                                                     </div>
                                                 )}
