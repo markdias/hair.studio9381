@@ -311,6 +311,7 @@ const ImageUploader = ({ onUpload, folder = 'general', showMessage }) => {
 };
 
 const SectionConfig = ({ sectionId, settings, setSettings, showMessage, defaultMenuName, defaultHeadingName, description }) => {
+    const [isCollapsed, setIsCollapsed] = useState(true);
     const showKey = `show_${sectionId}_section`;
     const menuNameKey = `${sectionId}_menu_name`;
     const headingNameKey = `${sectionId}_heading_name`;
@@ -334,49 +335,66 @@ const SectionConfig = ({ sectionId, settings, setSettings, showMessage, defaultM
     };
 
     return (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm space-y-4 mb-8">
-            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Section Configuration</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="flex items-center justify-between p-4 bg-stone-50 rounded-lg border border-stone-100">
-                    <div>
-                        <p className="font-medium text-gray-900">Show Section</p>
-                        <p className="text-xs text-gray-500">{description || `Enable or disable ${sectionId} on the website`}</p>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-8">
+            <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
+            >
+                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Section Configuration</h3>
+                <ChevronDown
+                    size={20}
+                    className={`text-gray-500 transition-transform ${isCollapsed ? '' : 'rotate-180'}`}
+                />
+            </button>
+
+            {!isCollapsed && (
+                <div className="px-6 pb-6 space-y-4">
+                    {/* Toggle Section - Full Width */}
+                    <div className="flex items-center justify-between p-4 bg-stone-50 rounded-lg border border-stone-100">
+                        <div>
+                            <p className="font-medium text-gray-900">Show Section</p>
+                            <p className="text-xs text-gray-500">{description || `Enable or disable ${sectionId} on the website`}</p>
+                        </div>
+                        <button
+                            onClick={() => handleSaveSetting(showKey, isVisible ? 'false' : 'true')}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full border-2 transition-colors ${isVisible ? 'border-[#3D2B1F]' : 'border-gray-200'}`}
+                            style={{ backgroundColor: isVisible ? '#3D2B1F' : '#E5E7EB' }}
+                        >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isVisible ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
                     </div>
-                    <button
-                        onClick={() => handleSaveSetting(showKey, isVisible ? 'false' : 'true')}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full border-2 transition-colors ${isVisible ? 'border-[#3D2B1F]' : 'border-gray-200'}`}
-                        style={{ backgroundColor: isVisible ? '#3D2B1F' : '#E5E7EB' }}
-                    >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isVisible ? 'translate-x-6' : 'translate-x-1'}`} />
-                    </button>
-                </div>
-                <div className="space-y-2">
-                    <label className="text-xs font-medium text-gray-500 uppercase">Menu Name</label>
-                    <div className="flex gap-2">
-                        <input
-                            value={menuName}
-                            onChange={(e) => setSettings(prev => ({ ...prev, [menuNameKey]: e.target.value }))}
-                            onBlur={(e) => handleSaveSetting(menuNameKey, e.target.value)}
-                            placeholder={`e.g. ${defaultMenuName}`}
-                            className="flex-grow px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-stone-800 outline-none"
-                        />
+
+                    {/* Name Fields - Side by Side */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium text-gray-500 uppercase">Menu Name</label>
+                            <div className="flex gap-2">
+                                <input
+                                    value={menuName}
+                                    onChange={(e) => setSettings(prev => ({ ...prev, [menuNameKey]: e.target.value }))}
+                                    onBlur={(e) => handleSaveSetting(menuNameKey, e.target.value)}
+                                    placeholder={`e.g. ${defaultMenuName}`}
+                                    className="flex-grow px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-stone-800 outline-none"
+                                />
+                            </div>
+                            <p className="text-xs text-gray-400">Text shown in navigation menu</p>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium text-gray-500 uppercase">Section Heading</label>
+                            <div className="flex gap-2">
+                                <input
+                                    value={headingName}
+                                    onChange={(e) => setSettings(prev => ({ ...prev, [headingNameKey]: e.target.value }))}
+                                    onBlur={(e) => handleSaveSetting(headingNameKey, e.target.value)}
+                                    placeholder={`e.g. ${defaultHeadingName}`}
+                                    className="flex-grow px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-stone-800 outline-none"
+                                />
+                            </div>
+                            <p className="text-xs text-gray-400">Text shown as page section title</p>
+                        </div>
                     </div>
-                    <p className="text-xs text-gray-400">Text shown in navigation menu</p>
                 </div>
-                <div className="space-y-2">
-                    <label className="text-xs font-medium text-gray-500 uppercase">Section Heading</label>
-                    <div className="flex gap-2">
-                        <input
-                            value={headingName}
-                            onChange={(e) => setSettings(prev => ({ ...prev, [headingNameKey]: e.target.value }))}
-                            onBlur={(e) => handleSaveSetting(headingNameKey, e.target.value)}
-                            placeholder={`e.g. ${defaultHeadingName}`}
-                            className="flex-grow px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-stone-800 outline-none"
-                        />
-                    </div>
-                    <p className="text-xs text-gray-400">Text shown as page section title</p>
-                </div>
-            </div>
+            )}
         </div>
     );
 };
