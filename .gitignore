@@ -26,3 +26,4 @@ dist-ssr
 .npm-local
 .vercel
 .env*.local
+.npm-cache
