@@ -1343,32 +1343,35 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
     const [newClientData, setNewClientData] = useState({ name: '', email: '', phone: '' });
 
     const handleQuickAddClient = async () => {
-        if (!newClientData.name || !newClientData.email) return showMessage('error', 'Name and Email are required');
+        if (!newClientData.name) return showMessage('error', 'Name is required');
 
         try {
-            // Check if client with this email already exists
-            const { data: existingClient, error: searchError } = await supabase
-                .from('clients')
-                .select('*')
-                .eq('email', newClientData.email.trim())
-                .maybeSingle();
-
-            if (searchError) throw searchError;
-
             let clientToSelect;
 
-            if (existingClient) {
-                // If exists, use existing one
-                clientToSelect = existingClient;
-                showMessage('info', 'Existing client found and selected');
-            } else {
-                // If not, create new one
+            // Check if client with this email already exists (only if email provided)
+            if (newClientData.email?.trim()) {
+                const { data: existingClient, error: searchError } = await supabase
+                    .from('clients')
+                    .select('*')
+                    .eq('email', newClientData.email.trim())
+                    .maybeSingle();
+
+                if (searchError) throw searchError;
+
+                if (existingClient) {
+                    clientToSelect = existingClient;
+                    showMessage('info', 'Existing client found and selected');
+                }
+            }
+
+            if (!clientToSelect) {
+                // Create new one
                 const { data: newClient, error: insertError } = await supabase
                     .from('clients')
                     .insert([{
                         name: newClientData.name.trim(),
-                        email: newClientData.email.trim().toLowerCase(),
-                        phone: newClientData.phone?.trim()
+                        email: newClientData.email?.trim()?.toLowerCase() || null,
+                        phone: newClientData.phone?.trim() || null
                     }])
                     .select()
                     .single();
@@ -2701,7 +2704,7 @@ const ClientsTab = ({ clients, setClients, showMessage, refreshClients }) => {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                    <input type="email" className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3D2B1F]" required value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                                    <input type="email" className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3D2B1F]" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
