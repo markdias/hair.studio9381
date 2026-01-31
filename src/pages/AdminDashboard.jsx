@@ -6,7 +6,7 @@ import {
     Save, LogOut, Check, Info, Loader2,
     Settings, Scissors, Tag, Image, Plus, Trash2,
     MapPin, Phone, Mail, Clock, User, Calendar, Edit, X,
-    List, ChevronLeft, ChevronRight, Instagram, Facebook, Music2, Maximize2, Search, Palette, MessageCircle
+    List, ChevronLeft, ChevronRight, ChevronDown, Instagram, Facebook, Music2, Maximize2, Search, Palette, MessageCircle
 } from 'lucide-react';
 import AntdDatePicker from '../components/AntdDatePicker';
 import { useTheme } from '../lib/ThemeContext';
