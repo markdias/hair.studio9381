@@ -8,6 +8,9 @@ import {
     MapPin, Phone, Mail, Clock, User, Calendar, Edit, X,
     List, ChevronLeft, ChevronRight, Instagram, Facebook, Music2, Maximize2, Search
 } from 'lucide-react';
+import { DatePicker, ConfigProvider } from 'antd';
+import dayjs from 'dayjs';
+import 'antd/dist/reset.css';
 
 const TABS = [
     { id: 'general', label: 'General Settings', icon: <Settings size={18} /> },
@@ -1673,7 +1676,7 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                     </div>
                                     <div className="flex gap-3 pt-2">
                                         <button onClick={() => setIsAddingNewClient(false)} className="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-                                        <button onClick={handleQuickAddClient} className="flex-1 py-2 bg-[#3D2B1F] text-white rounded-lg hover:bg-opacity-90">Save & Select</button>
+                                        <button onClick={handleQuickAddClient} className="flex-1 py-2 bg-[#3D2B1F] text-white rounded-lg hover:bg-opacity-90 font-medium">Save & Select</button>
                                     </div>
                                 </div>
                             ) : (
@@ -1692,7 +1695,7 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                         />
                                         {clientSearch && !newAppt.client_id && (
                                             <div className="absolute z-10 w-full bg-white border border-gray-200 mt-1 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                                                {filteredClientsSearch?.length > 0 ? (
+                                                {filteredClientsSearch && filteredClientsSearch.length > 0 ? (
                                                     filteredClientsSearch.map(c => (
                                                         <div
                                                             key={c.id}
@@ -1754,13 +1757,29 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                     <div className="md:col-span-2 space-y-3 pt-2 border-t border-gray-100">
                                         <label className="block text-sm font-bold text-gray-800">Date & Time</label>
                                         <div className="space-y-4">
-                                            <input
-                                                type="date"
-                                                className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#3D2B1F] text-base"
-                                                required
-                                                value={newAppt.date}
-                                                onChange={e => setNewAppt({ ...newAppt, date: e.target.value })}
-                                            />
+                                        <label className="block text-sm font-bold text-gray-800">Date & Time</label>
+                                        <div className="space-y-4">
+                                            <ConfigProvider
+                                                theme={{
+                                                    token: {
+                                                        colorPrimary: '#3D2B1F',
+                                                        borderRadius: 8,
+                                                    },
+                                                }}
+                                            >
+                                                <DatePicker 
+                                                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm text-base h-12"
+                                                    value={newAppt.date ? dayjs(newAppt.date) : null}
+                                                    onChange={(date, dateString) => setNewAppt({ ...newAppt, date: dateString })}
+                                                    format="YYYY-MM-DD"
+                                                    inputReadOnly={true}
+                                                    allowClear={false}
+                                                    showToday={true}
+                                                    size="large"
+                                                />
+                                            </ConfigProvider>
+                                            
+                                            <div className="relative bg-gray-50 rounded-lg p-3 border border-gray-200">
 
                                             <div className="relative bg-gray-50 rounded-lg p-3 border border-gray-200">
                                                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Available Slots</label>
@@ -1777,8 +1796,8 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                                                     type="button"
                                                                     onClick={() => setNewAppt({ ...newAppt, time: t })}
                                                                     className={`px-1 py-2 text-sm rounded-md border transition-all shadow-sm ${newAppt.time === t
-                                                                            ? 'bg-[#3D2B1F] text-white border-[#3D2B1F] font-semibold ring-2 ring-offset-1 ring-[#3D2B1F]'
-                                                                            : 'bg-white text-gray-700 border-gray-200 hover:bg-white hover:border-[#3D2B1F] hover:text-[#3D2B1F]'
+                                                                        ? 'bg-[#3D2B1F] text-white border-[#3D2B1F] font-semibold ring-2 ring-offset-1 ring-[#3D2B1F]'
+                                                                        : 'bg-white text-gray-700 border-gray-200 hover:bg-white hover:border-[#3D2B1F] hover:text-[#3D2B1F]'
                                                                         }`}
                                                                 >
                                                                     {t}
@@ -2465,19 +2484,29 @@ const MessagesTab = ({ settings, setSettings, showMessage, refresh }) => {
                                     {showPreview ? 'Live Preview' : 'HTML Editor'}
                                 </span>
                             </div>
-                            <button
-                                onClick={() => setShowPreview(!showPreview)}
-                                className="text-xs font-semibold text-stone-800 bg-stone-100 hover:bg-stone-200 px-3 py-1 rounded-full transition-all"
-                            >
-                                {showPreview ? 'Edit HTML' : 'Show Preview'}
-                            </button>
+                            <div className="flex gap-2">
+                                {!showPreview && (
+                                    <button
+                                        onClick={handleSaveTemplate}
+                                        className="text-xs font-semibold text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded-full transition-all flex items-center gap-1"
+                                    >
+                                        <Save size={12} /> Save & Preview
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => setShowPreview(!showPreview)}
+                                    className="text-xs font-semibold text-stone-800 bg-stone-100 hover:bg-stone-200 px-3 py-1 rounded-full transition-all flex items-center gap-1"
+                                >
+                                    {showPreview ? <><Edit size={12}/> Edit HTML</> : <><Maximize2 size={12}/> Cancel</>}
+                                </button>
+                            </div>
                         </div>
 
                         {showPreview ? (
                             <div className="h-[500px] overflow-y-auto p-8 bg-gray-50 flex items-start justify-center">
                                 <div
-                                    className="bg-white shadow-lg rounded-xl overflow-hidden w-full max-w-[600px]"
-                                    dangerouslySetInnerHTML={{ __html: previewHtml }}
+                                    className="bg-white shadow-lg rounded-xl overflow-hidden w-full max-w-[600px] min-h-[400px] p-6 text-sm"
+                                    dangerouslySetInnerHTML={{ __html: previewHtml || '<p class="text-center text-gray-400 italic">No content to preview</p>' }}
                                 />
                             </div>
                         ) : (
