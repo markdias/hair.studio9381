@@ -6,12 +6,14 @@ import {
     Save, LogOut, Check, Info, Loader2,
     Settings, Scissors, Tag, Image, Plus, Trash2,
     MapPin, Phone, Mail, Clock, User, Calendar, Edit, X,
-    List, ChevronLeft, ChevronRight, Instagram, Facebook, Music2, Maximize2, Search
+    List, ChevronLeft, ChevronRight, Instagram, Facebook, Music2, Maximize2, Search, Palette
 } from 'lucide-react';
 import AntdDatePicker from '../components/AntdDatePicker';
+import { useTheme } from '../lib/ThemeContext';
 
 const TABS = [
     { id: 'general', label: 'General Settings', icon: <Settings size={18} /> },
+    { id: 'theme', label: 'Theme', icon: <Palette size={18} /> },
     { id: 'services', label: 'Services', icon: <Scissors size={18} /> },
     { id: 'pricing', label: 'Pricing', icon: <Tag size={18} /> },
     { id: 'team', label: 'Team', icon: <User size={18} /> },
@@ -166,7 +168,7 @@ const AdminDashboard = () => {
             <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div className="p-6 border-b border-gray-200">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10  rounded-lg flex items-center justify-center" style={{ backgroundColor: "#3D2B1F" }}>
+                        <div className="w-10 h-10  rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--primary-brown)" }}>
                             <Scissors size={20} className="text-white" />
                         </div>
                         <div>
@@ -240,6 +242,7 @@ const AdminDashboard = () => {
 const TabContent = ({ activeTab, data, setData, refresh, showMessage, fetchClients }) => {
     switch (activeTab) {
         case 'general': return <GeneralTab settings={data.siteSettings} setSettings={setData.setSiteSettings} showMessage={showMessage} />;
+        case 'theme': return <ThemeTab showMessage={showMessage} />;
         case 'services': return <ServicesTab services={data.services} refresh={refresh} showMessage={showMessage} />;
         case 'pricing': return <PricingTab pricing={data.pricing} setPricing={setData.setPricing} showMessage={showMessage} />;
         case 'team': return <TeamTab stylists={data.stylists} refresh={refresh} showMessage={showMessage} />;
@@ -527,7 +530,7 @@ const OpeningHoursPicker = ({ initialValue, onSave, showMessage }) => {
                                         }
                                         border active:scale-95
                                     `}
-                                    style={selectedSlots[day][hourIdx] ? { backgroundColor: '#3D2B1F' } : {}}
+                                    style={selectedSlots[day][hourIdx] ? { backgroundColor: 'var(--primary-brown)' } : {}}
                                 />
                             ))}
                         </div>
@@ -545,7 +548,7 @@ const OpeningHoursPicker = ({ initialValue, onSave, showMessage }) => {
             <button
                 onClick={() => handleSaveHours()}
                 className="w-full px-4 py-3 bg-stone-800 text-white rounded-lg hover:shadow-lg transition-all font-medium"
-                style={{ backgroundColor: '#3D2B1F' }}
+                style={{ backgroundColor: 'var(--primary-brown)' }}
             >
                 Set Opening Hours
             </button>
@@ -634,7 +637,7 @@ const BrandingEditor = ({ settings, onSave, showMessage }) => {
                                 <div
                                     onMouseDown={handleResizeStart}
                                     className="absolute bottom-0 right-0 w-4 h-4 bg-stone-800 cursor-nwse-resize flex items-center justify-center hover:scale-125 transition-transform"
-                                    style={{ backgroundColor: '#3D2B1F' }}
+                                    style={{ backgroundColor: 'var(--primary-brown)' }}
                                 >
                                     <div className="w-1 h-1 bg-white rounded-full"></div>
                                 </div>
@@ -659,7 +662,7 @@ const BrandingEditor = ({ settings, onSave, showMessage }) => {
                                 <button
                                     onClick={saveSize}
                                     className="mt-4 px-6 py-2 bg-stone-800 text-white rounded-lg hover:bg-opacity-90 transition-all font-medium flex items-center gap-2"
-                                    style={{ backgroundColor: '#3D2B1F' }}
+                                    style={{ backgroundColor: 'var(--primary-brown)' }}
                                 >
                                     <Save size={16} /> Save Logo Size
                                 </button>
@@ -669,6 +672,155 @@ const BrandingEditor = ({ settings, onSave, showMessage }) => {
                 </div>
             </div>
         </div>
+    );
+};
+
+const ThemeTab = ({ showMessage }) => {
+    const { theme, updateTheme, saveAsDefault, resetToDefault, resetToFactory } = useTheme();
+    // Initialize local state with global theme
+    const [localTheme, setLocalTheme] = useState(theme);
+
+    // Sync local state when global theme changes (e.g. on initial load)
+    useEffect(() => {
+        setLocalTheme(theme);
+    }, [theme]);
+
+    const colors = [
+        { label: 'Primary Brand Color', var: '--primary-brown' },
+        { label: 'Primary Hover Color', var: '--primary-brown-hover' },
+        { label: 'Accent Color', var: '--accent-cream' },
+        { label: 'Background Color', var: '--soft-cream' },
+        { label: 'Headings & Dark Text', var: '--text-dark' },
+        { label: 'Light Text', var: '--text-light' },
+    ];
+
+    const handleChange = (cssVar, value) => {
+        setLocalTheme(prev => ({ ...prev, [cssVar]: value }));
+    };
+
+    const handleSave = async () => {
+        await updateTheme(localTheme);
+        showMessage('success', 'Theme saved successfully!');
+    };
+
+    const handleSaveDefault = async () => {
+        if (!window.confirm('Are you sure you want to save the current settings as the new default?')) return;
+        await saveAsDefault(localTheme);
+        showMessage('success', 'Current theme saved as default.');
+    };
+
+    const handleResetDefault = async () => {
+        if (!window.confirm('Reset to your saved default theme? Unsaved changes will be lost.')) return;
+        const defaulted = await resetToDefault();
+        setLocalTheme(defaulted);
+        showMessage('success', 'Reset to saved default.');
+    };
+
+    const handleResetFactory = async () => {
+        if (!window.confirm('Reset to original factory colors? This cannot be undone.')) return;
+        const factory = await resetToFactory();
+        setLocalTheme(factory);
+        showMessage('success', 'Reset to factory original colors.');
+    };
+
+
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">Theme Settings</h2>
+            <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {colors.map((color) => (
+                        <div key={color.var} className="flex flex-col gap-2">
+                            <label className="text-sm font-medium text-gray-700">{color.label}</label>
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="color"
+                                    value={localTheme[color.var] || '#000000'}
+                                    onChange={(e) => handleChange(color.var, e.target.value)}
+                                    className="h-10 w-20 rounded border border-gray-300 cursor-pointer"
+                                />
+                                <input
+                                    type="text"
+                                    value={localTheme[color.var] || ''}
+                                    onChange={(e) => handleChange(color.var, e.target.value)}
+                                    className="flex-grow px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
+                                />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <h3 className="text-lg font-semibold text-gray-900 mt-8 mb-4">Typography</h3>
+                <div className="bg-gray-50 rounded-lg p-6 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-sm font-medium text-gray-700">Heading Font</label>
+                            <select
+                                value={localTheme['--font-heading'] || "'Playfair Display', serif"}
+                                onChange={(e) => handleChange('--font-heading', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+                            >
+                                <option value="'Playfair Display', serif">Playfair Display (Serif)</option>
+                                <option value="'Merriweather', serif">Merriweather (Serif)</option>
+                                <option value="'Inter', sans-serif">Inter (Sans-serif)</option>
+                                <option value="'Montserrat', sans-serif">Montserrat (Sans-serif)</option>
+                                <option value="'Lato', sans-serif">Lato (Sans-serif)</option>
+                                <option value="'Great Vibes', cursive">Great Vibes (Script)</option>
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-sm font-medium text-gray-700">Body Font</label>
+                            <select
+                                value={localTheme['--font-body'] || "'Inter', sans-serif"}
+                                onChange={(e) => handleChange('--font-body', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+                            >
+                                <option value="'Inter', sans-serif">Inter (Sans-serif)</option>
+                                <option value="'Open Sans', sans-serif">Open Sans (Sans-serif)</option>
+                                <option value="'Roboto', sans-serif">Roboto (Sans-serif)</option>
+                                <option value="'Lato', sans-serif">Lato (Sans-serif)</option>
+                                <option value="'Montserrat', sans-serif">Montserrat (Sans-serif)</option>
+                                <option value="'Playfair Display', serif">Playfair Display (Serif)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-8 flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-gray-100">
+                    <div className="flex gap-3">
+                        <button
+                            onClick={handleResetFactory}
+                            className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-all"
+                        >
+                            Reset to Original
+                        </button>
+                        <button
+                            onClick={handleResetDefault}
+                            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium transition-all"
+                        >
+                            Reset to Default
+                        </button>
+                    </div>
+
+                    <div className="flex gap-3">
+                        <button
+                            onClick={handleSaveDefault}
+                            className="px-4 py-2 text-stone-600 hover:bg-stone-50 border border-stone-200 rounded-lg text-sm font-medium transition-all"
+                        >
+                            Save as Default
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            className="flex items-center gap-2 px-6 py-2 bg-stone-800 text-white rounded-lg hover:shadow-lg transition-all font-medium"
+                            style={{ backgroundColor: 'var(--primary-brown)' }}
+                        >
+                            <Save size={18} />
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </motion.div>
     );
 };
 
@@ -739,7 +891,7 @@ const GeneralTab = ({ settings, setSettings, showMessage }) => {
                             />
                             <button
                                 onClick={() => handleSave(field.key, settings[field.key])}
-                                className="px-4 py-2 bg-stone-800 text-white rounded-lg hover:bg-opacity-90 transition-all" style={{ backgroundColor: "#3D2B1F" }}
+                                className="px-4 py-2 bg-stone-800 text-white rounded-lg hover:bg-opacity-90 transition-all" style={{ backgroundColor: "var(--primary-brown)" }}
                             >
                                 <Save size={18} />
                             </button>
@@ -1323,13 +1475,57 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
         fetchAppointments();
     }, []);
 
+    // Hybrid appointments: Use Supabase locally, API in production
+    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
     const fetchAppointments = async () => {
         setLoading(true);
         try {
-            const response = await fetch('/api/appointments/list');
-            const data = await response.json();
-            if (data.appointments) {
-                setAppointments(data.appointments);
+            if (isLocalDev) {
+                // Local: Fetch from Supabase
+                const { data, error } = await supabase
+                    .from('appointments')
+                    .select(`
+                        id,
+                        start_time,
+                        end_time,
+                        stylist,
+                        service,
+                        status,
+                        notes,
+                        clients (
+                            id,
+                            name,
+                            email,
+                            phone
+                        )
+                    `);
+
+                if (error) throw error;
+
+                const mappedAppointments = data.map(appt => ({
+                    id: appt.id,
+                    stylist: appt.stylist,
+                    startTime: appt.start_time,
+                    endTime: appt.end_time,
+                    service: appt.service,
+                    client_id: appt.clients?.id,
+                    customer: {
+                        name: appt.clients?.name || 'Unknown',
+                        email: appt.clients?.email || '',
+                        phone: appt.clients?.phone || '',
+                        service: appt.service
+                    }
+                }));
+
+                setAppointments(mappedAppointments);
+            } else {
+                // Production: Fetch from Google Calendar API
+                const response = await fetch('/api/appointments/list');
+                const data = await response.json();
+                if (data.appointments) {
+                    setAppointments(data.appointments);
+                }
             }
         } catch (err) {
             console.error('Fetch error:', err);
@@ -1401,34 +1597,61 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
         const selectedPriceItem = pricing?.find(p => p.item_name === newAppt.service);
         const duration = selectedPriceItem?.duration_minutes || 60;
 
+        const startDateTime = new Date(`${newAppt.date}T${newAppt.time}:00`).toISOString();
+        const endDateTime = new Date(new Date(`${newAppt.date}T${newAppt.time}:00`).getTime() + duration * 60 * 1000).toISOString();
+
         try {
-            const res = await fetch('/api/book', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    stylist: newAppt.stylist,
-                    service: newAppt.service,
-                    date: newAppt.date,
-                    time: newAppt.time,
-                    name: client.name,
-                    email: client.email,
-                    phone: client.phone,
-                    duration_minutes: duration,
-                    send_email: newAppt.send_email
-                })
-            });
-            const data = await res.json();
-            if (data.success) {
+            if (isLocalDev) {
+                // Local: Save to Supabase
+                const { error } = await supabase
+                    .from('appointments')
+                    .insert({
+                        client_id: client.id,
+                        stylist: newAppt.stylist,
+                        service: newAppt.service,
+                        start_time: startDateTime,
+                        end_time: endDateTime,
+                        status: 'confirmed'
+                    });
+
+                if (error) throw error;
+
                 showMessage('success', 'Appointment created!');
                 setIsAddModalOpen(false);
                 fetchAppointments();
                 setNewAppt({ client_id: '', stylist: '', service: '', date: '', time: '', send_email: true });
-                setClientSearch(''); // Reset search
+                setClientSearch('');
             } else {
-                showMessage('error', data.error || 'Failed to create');
+                // Production: Use Google Calendar API
+                const res = await fetch('/api/book', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        stylist: newAppt.stylist,
+                        service: newAppt.service,
+                        date: newAppt.date,
+                        time: newAppt.time,
+                        name: client.name,
+                        email: client.email,
+                        phone: client.phone,
+                        duration_minutes: duration,
+                        send_email: newAppt.send_email
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showMessage('success', 'Appointment created!');
+                    setIsAddModalOpen(false);
+                    fetchAppointments();
+                    setNewAppt({ client_id: '', stylist: '', service: '', date: '', time: '', send_email: true });
+                    setClientSearch('');
+                } else {
+                    showMessage('error', data.error || 'Failed to create');
+                }
             }
         } catch (err) {
-            showMessage('error', 'API Error');
+            console.error('Add appt error:', err);
+            showMessage('error', err.message || 'API Error');
         }
     };
 
@@ -1436,17 +1659,31 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
         if (!confirm(`Delete appointment for ${appt.customer.name}?`)) return;
 
         try {
-            const response = await fetch('/api/appointments/delete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ eventId: appt.id, calendarId: appt.calendarId })
-            });
+            if (isLocalDev) {
+                // Local: Delete from Supabase
+                const { error } = await supabase
+                    .from('appointments')
+                    .delete()
+                    .eq('id', appt.id);
 
-            if (response.ok) {
+                if (error) throw error;
+
                 showMessage('success', 'Appointment deleted');
                 fetchAppointments();
             } else {
-                throw new Error('Delete failed');
+                // Production: Delete from Google Calendar
+                const response = await fetch('/api/appointments/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ eventId: appt.id, calendarId: appt.calendarId })
+                });
+
+                if (response.ok) {
+                    showMessage('success', 'Appointment deleted');
+                    fetchAppointments();
+                } else {
+                    throw new Error('Delete failed');
+                }
             }
         } catch (err) {
             showMessage('error', 'Failed to delete appointment');
@@ -2399,7 +2636,9 @@ const MessagesTab = ({ settings, setSettings, showMessage, refresh }) => {
     const [template, setTemplate] = useState(settings.email_template || DEFAULT_EMAIL_TEMPLATE.trim());
     const [subject, setSubject] = useState(settings.email_subject || 'Booking Confirmation - Studio 938');
     const [isSaving, setIsSaving] = useState(false);
+    const [showHtmlSource, setShowHtmlSource] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
+    const contentEditableRef = React.useRef(null);
 
     useEffect(() => {
         if (settings.email_template) {
@@ -2412,13 +2651,31 @@ const MessagesTab = ({ settings, setSettings, showMessage, refresh }) => {
         }
     }, [settings.email_template, settings.email_subject]);
 
-    const handleSave = async (content = template) => {
+    // Update contentEditable when template changes (only if not currently editing in it to avoid cursor jumps, 
+    // but here we rely on the toggle to switch modes so it's safer)
+    useEffect(() => {
+        if (contentEditableRef.current && !showHtmlSource) {
+            if (contentEditableRef.current.innerHTML !== template) {
+                contentEditableRef.current.innerHTML = template;
+            }
+        }
+    }, [template, showHtmlSource, showPreview]);
+
+
+    const handleSave = async () => {
+        // If in visual mode, get content from ref
+        let contentToSave = template;
+        if (!showHtmlSource && contentEditableRef.current) {
+            contentToSave = contentEditableRef.current.innerHTML;
+            setTemplate(contentToSave); // Sync state
+        }
+
         setIsSaving(true);
         try {
             // Save template
             const { error: templateError } = await supabase
                 .from('site_settings')
-                .upsert({ key: 'email_template', value: content });
+                .upsert({ key: 'email_template', value: contentToSave });
             if (templateError) throw templateError;
 
             // Save subject
@@ -2436,12 +2693,21 @@ const MessagesTab = ({ settings, setSettings, showMessage, refresh }) => {
         }
     };
 
+    const handleVisualBlur = () => {
+        if (contentEditableRef.current) {
+            setTemplate(contentEditableRef.current.innerHTML);
+        }
+    };
+
     const resetToDefault = async () => {
-        if (confirm('Reset to default template? This will overwrite your current changes and save to the database.')) {
+        if (window.confirm('Reset to default template? This will overwrite your current changes.')) {
             const content = DEFAULT_EMAIL_TEMPLATE.trim();
             const defaultSubject = 'Booking Confirmation - Studio 938';
             setTemplate(content);
             setSubject(defaultSubject);
+            if (contentEditableRef.current) {
+                contentEditableRef.current.innerHTML = content;
+            }
 
             // We need to save both
             setIsSaving(true);
@@ -2467,7 +2733,6 @@ const MessagesTab = ({ settings, setSettings, showMessage, refresh }) => {
         .replace(/{{salon_phone}}/g, settings.phone || '020 8445 1122')
         .replace(/{{salon_location}}/g, settings.address || '938 High Road, London');
 
-
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="flex justify-between items-center mb-6">
@@ -2483,10 +2748,10 @@ const MessagesTab = ({ settings, setSettings, showMessage, refresh }) => {
                         Reset to Default
                     </button>
                     <button
-                        onClick={() => handleSave()}
+                        onClick={handleSave}
                         disabled={isSaving}
                         className="px-6 py-2 bg-stone-800 text-white rounded-lg hover:bg-stone-900 flex items-center gap-2 transition-all disabled:opacity-50"
-                        style={{ backgroundColor: "#3D2B1F" }}
+                        style={{ backgroundColor: "var(--primary-brown)" }}
                     >
                         {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                         Save Settings
@@ -2514,24 +2779,28 @@ const MessagesTab = ({ settings, setSettings, showMessage, refresh }) => {
                             <div className="flex items-center gap-2">
                                 <Mail size={16} className="text-gray-500" />
                                 <span className="text-sm font-medium text-gray-700">
-                                    {showPreview ? 'Live Preview' : 'HTML Editor'}
+                                    {showPreview ? 'Live Preview' : 'Email Content'}
                                 </span>
                             </div>
-                            <div className="flex gap-2">
-                                {!showPreview && (
-                                    <button
-                                        onClick={handleSaveTemplate}
-                                        className="text-xs font-semibold text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded-full transition-all flex items-center gap-1"
-                                    >
-                                        <Save size={12} /> Save & Preview
-                                    </button>
-                                )}
+                            <div className="flex items-center gap-4">
                                 <button
                                     onClick={() => setShowPreview(!showPreview)}
-                                    className="text-xs font-semibold text-stone-800 bg-stone-100 hover:bg-stone-200 px-3 py-1 rounded-full transition-all flex items-center gap-1"
+                                    className={`text-xs font-semibold px-3 py-1 rounded-full transition-all flex items-center gap-1 ${showPreview ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                                 >
-                                    {showPreview ? <><Edit size={12} /> Edit HTML</> : <><Maximize2 size={12} /> Cancel</>}
+                                    {showPreview ? <><Edit size={12} /> Exit Preview</> : <><Maximize2 size={12} /> Live Preview</>}
                                 </button>
+
+                                {!showPreview && (
+                                    <label className="flex items-center gap-2 text-xs font-semibold text-stone-600 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={showHtmlSource}
+                                            onChange={(e) => setShowHtmlSource(e.target.checked)}
+                                            className="rounded border-gray-300 text-stone-600 focus:ring-stone-500"
+                                        />
+                                        Show HTML Source
+                                    </label>
+                                )}
                             </div>
                         </div>
 
@@ -2542,14 +2811,27 @@ const MessagesTab = ({ settings, setSettings, showMessage, refresh }) => {
                                     dangerouslySetInnerHTML={{ __html: previewHtml || '<p class="text-center text-gray-400 italic">No content to preview</p>' }}
                                 />
                             </div>
-                        ) : (
+                        ) : showHtmlSource ? (
                             <textarea
                                 value={template}
                                 onChange={(e) => setTemplate(e.target.value)}
                                 placeholder="Paste your HTML template here..."
-                                className="w-full h-[500px] p-4 font-mono text-sm focus:ring-0 border-none outline-none resize-none"
+                                className="w-full h-[500px] p-4 font-mono text-sm focus:ring-0 border-none outline-none resize-none bg-slate-50 text-slate-700"
                                 spellCheck="false"
                             />
+                        ) : (
+                            <div className="h-[500px] overflow-y-auto p-8 bg-gray-50">
+                                <div
+                                    ref={contentEditableRef}
+                                    contentEditable={true}
+                                    onBlur={handleVisualBlur}
+                                    className="bg-white shadow-lg rounded-xl w-full max-w-[600px] min-h-[400px] p-6 text-sm mx-auto outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-100"
+                                // Initial content is set via useEffect to avoid re-render loop on typing
+                                />
+                                <p className="text-center text-xs text-gray-400 mt-2">
+                                    Click inside the box to edit text directly.
+                                </p>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -2562,12 +2844,12 @@ const MessagesTab = ({ settings, setSettings, showMessage, refresh }) => {
                             Available Variables
                         </h3>
                         <p className="text-xs text-gray-500 mb-4">
-                            Copy and paste these tags into your template. They will be automatically replaced with booking details.
+                            These variables will be replaced with actual details when sent.
                         </p>
                         <div className="space-y-3">
                             {EMAIL_VARIABLES.map(v => (
                                 <div key={v.tag} className="flex flex-col gap-1">
-                                    <code className="text-[11px] bg-stone-100 text-stone-800 px-2 py-1 rounded inline-block w-fit font-bold">
+                                    <code className="text-[11px] bg-stone-100 text-stone-800 px-2 py-1 rounded inline-block w-fit font-bold select-all">
                                         {v.tag}
                                     </code>
                                     <span className="text-[10px] text-gray-500 ml-1">{v.desc}</span>
@@ -2577,9 +2859,11 @@ const MessagesTab = ({ settings, setSettings, showMessage, refresh }) => {
                     </div>
 
                     <div className="bg-amber-50 rounded-xl border border-amber-200 p-6">
-                        <h3 className="text-sm font-bold text-amber-900 mb-2">Pro Tip</h3>
+                        <h3 className="text-sm font-bold text-amber-900 mb-2">Editing Tips</h3>
                         <p className="text-xs text-amber-800 leading-relaxed">
-                            You can use standard HTML tags like <code>&lt;b&gt;</code>, <code>&lt;hr&gt;</code>, or <code>&lt;img&gt;</code> to style your confirmation emails. Make sure all styles are inline for maximum compatibility across email clients!
+                            You are editing the visual template.
+                            <br /><br />
+                            <strong>Caution:</strong> If you delete the style structure, the email might look different. Use "Show HTML Source" to restore or edit the layout code.
                         </p>
                     </div>
                 </div>
@@ -2636,6 +2920,24 @@ const ClientsTab = ({ clients, setClients, showMessage, refreshClients }) => {
         }
     };
 
+    const handleDelete = async (client) => {
+        if (window.confirm(`Are you sure you want to delete ${client.name}? This action cannot be undone.`)) {
+            try {
+                const { error } = await supabase
+                    .from('clients')
+                    .delete()
+                    .eq('id', client.id);
+
+                if (error) throw error;
+
+                showMessage('success', 'Client deleted successfully');
+                refreshClients();
+            } catch (err) {
+                showMessage('error', err.message);
+            }
+        }
+    };
+
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -2643,7 +2945,7 @@ const ClientsTab = ({ clients, setClients, showMessage, refreshClients }) => {
                 <button
                     onClick={() => handleOpenModal()}
                     className="text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:opacity-90 transition-all font-medium"
-                    style={{ backgroundColor: "#3D2B1F" }}
+                    style={{ backgroundColor: "var(--primary-brown)" }}
                 >
                     <Plus size={18} /> Add Client
                 </button>
@@ -2683,12 +2985,20 @@ const ClientsTab = ({ clients, setClients, showMessage, refreshClients }) => {
                                     </td>
                                     <td className="px-6 py-4 truncate max-w-xs">{client.notes || '-'}</td>
                                     <td className="px-6 py-4 text-right">
-                                        <button
-                                            onClick={() => handleOpenModal(client)}
-                                            className="text-[#3D2B1F] hover:underline font-medium"
-                                        >
-                                            Edit
-                                        </button>
+                                        <div className="flex justify-end gap-3">
+                                            <button
+                                                onClick={() => handleOpenModal(client)}
+                                                className="text-[var(--primary-brown)] hover:underline font-medium flex items-center gap-1"
+                                            >
+                                                <Edit size={14} /> Edit
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(client)}
+                                                className="text-red-600 hover:text-red-800 hover:underline font-medium flex items-center gap-1"
+                                            >
+                                                <Trash2 size={14} /> Delete
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
