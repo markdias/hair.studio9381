@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;500;600;700&family=Open+Sans:wght@300;400;600;700&family=Playfair+Display:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap');
 
 @theme {
   --color-primary-brown: #3D2B1F;
@@ -9,12 +10,17 @@
 }
 
 :root {
+  /* Default values, overridden by ThemeContext */
   --primary-brown: #3D2B1F;
+  --primary-brown-hover: #4D3B2F;
   --accent-cream: #EAE0D5;
   --soft-cream: #F5F1ED;
   --text-dark: #2A1D15;
   --text-light: #FFFFFF;
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Inter', sans-serif;
   --glass: rgba(61, 43, 31, 0.8);
+  /* This might need dynamic handling or stay fixed */
 
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -83,9 +89,10 @@ button {
 }
 
 .btn-primary:hover {
-  background-color: #4D3B2F;
+  background-color: var(--primary-brown-hover);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(61, 43, 31, 0.2);
+  /* Consider making shadow dynamic or keeping generic */
 }
 
 .overlay {
@@ -115,7 +122,7 @@ button {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #4D3B2F;
+  background: var(--primary-brown-hover);
 }
 
 /* Mobile Specific Transitions and Fixes */
@@ -131,7 +138,7 @@ button {
     left: 0;
     width: 100%;
     height: 100vh;
-    background-color: #3D2B1F;
+    background-color: var(--primary-brown);
     flex-direction: column;
     justify-content: center;
     align-items: center;
@@ -151,7 +158,7 @@ button {
 
   .nav-links-mobile a {
     font-size: 1.5rem;
-    color: #EAE0D5;
+    color: var(--accent-cream);
     text-transform: uppercase;
     letter-spacing: 2px;
   }

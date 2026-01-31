@@ -27,10 +27,10 @@ const Navbar = ({ settings }) => {
             justifyContent: 'space-between',
             alignItems: 'center',
             zIndex: 1000,
-            backgroundColor: (isScrolled || isMenuOpen) ? 'rgba(61, 43, 31, 0.98)' : 'transparent',
+            backgroundColor: (isScrolled || isMenuOpen) ? 'rgba(var(--primary-brown-rgb), 0.98)' : 'transparent',
             backdropFilter: (isScrolled || isMenuOpen) ? 'blur(10px)' : 'none',
             transition: 'all 0.4s ease',
-            color: (isScrolled || isMenuOpen) ? '#EAE0D5' : '#FFFFFF',
+            color: (isScrolled || isMenuOpen) ? 'var(--accent-cream)' : 'var(--text-light)',
             boxSizing: 'border-box'
         }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -42,7 +42,7 @@ const Navbar = ({ settings }) => {
                         width: isScrolled ? `${(parseInt(settings.logo_size) || 85) * 0.7}px` : `${parseInt(settings.logo_size) || 85}px`,
                         borderRadius: '50%',
                         objectFit: 'cover',
-                        border: '1px solid rgba(234, 224, 213, 0.2)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
                         transition: 'all 0.4s ease'
                     }}
                 />
@@ -58,8 +58,8 @@ const Navbar = ({ settings }) => {
                 <a href="#contact">Contact</a>
                 <a href="#booking" className="btn-primary" style={{
                     padding: '10px 24px',
-                    backgroundColor: isScrolled ? '#EAE0D5' : '#3D2B1F',
-                    color: isScrolled ? '#3D2B1F' : '#EAE0D5',
+                    backgroundColor: isScrolled ? 'var(--accent-cream)' : 'var(--primary-brown)',
+                    color: isScrolled ? 'var(--primary-brown)' : 'var(--accent-cream)',
                     textDecoration: 'none'
                 }}>
                     Book Now
@@ -167,9 +167,9 @@ const Hero = ({ settings = {} }) => {
 
 const Services = ({ services = [] }) => {
     const iconMap = {
-        Calendar: <Calendar style={{ color: '#3D2B1F' }} />,
-        MapPin: <MapPin style={{ color: '#3D2B1F' }} />,
-        Phone: <Phone style={{ color: '#3D2B1F' }} />,
+        Calendar: <Calendar style={{ color: 'var(--primary-brown)' }} />,
+        MapPin: <MapPin style={{ color: 'var(--primary-brown)' }} />,
+        Phone: <Phone style={{ color: 'var(--primary-brown)' }} />,
     };
 
     const displayServices = services.length > 0 ? services : [
@@ -181,8 +181,8 @@ const Services = ({ services = [] }) => {
     return (
         <section id="services" style={{ padding: '120px 50px', backgroundColor: '#FFFFFF' }}>
             <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-                <h2 style={{ fontSize: '3rem', color: '#3D2B1F', marginBottom: '15px' }}>Our Services</h2>
-                <div style={{ width: '60px', height: '2px', backgroundColor: '#3D2B1F', margin: '0 auto' }}></div>
+                <h2 style={{ fontSize: '3rem', color: 'var(--primary-brown)', marginBottom: '15px' }}>Our Services</h2>
+                <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--primary-brown)', margin: '0 auto' }}></div>
             </div>
 
             <div style={{
@@ -198,7 +198,7 @@ const Services = ({ services = [] }) => {
                         whileHover={{ y: -10 }}
                         style={{
                             padding: '50px 40px',
-                            backgroundColor: '#F5F1ED',
+                            backgroundColor: 'var(--soft-cream)',
                             borderRadius: '8px',
                             textAlign: 'center',
                             transition: 'all 0.3s ease'
@@ -207,7 +207,7 @@ const Services = ({ services = [] }) => {
                         <div style={{ marginBottom: '25px', display: 'flex', justifyContent: 'center' }}>
                             {iconMap[service.icon_name] || iconMap.Calendar}
                         </div>
-                        <h3 style={{ fontSize: '1.8rem', marginBottom: '15px', color: '#3D2B1F' }}>{service.title}</h3>
+                        <h3 style={{ fontSize: '1.8rem', marginBottom: '15px', color: 'var(--primary-brown)' }}>{service.title}</h3>
                         <p style={{ color: '#666', lineHeight: '1.8' }}>{service.description || service.desc}</p>
                     </motion.div>
                 ))}
@@ -226,10 +226,10 @@ const TeamSection = ({ team = [] }) => {
     const displayTeam = team.length > 0 ? team : defaultTeam;
 
     return (
-        <section id="team" style={{ padding: '120px 50px', backgroundColor: '#F5F1ED' }}>
+        <section id="team" style={{ padding: '120px 50px', backgroundColor: 'var(--soft-cream)' }}>
             <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-                <h2 style={{ fontSize: '3rem', color: '#3D2B1F', marginBottom: '15px' }}>Meet the Dream Team</h2>
-                <div style={{ width: '60px', height: '2px', backgroundColor: '#3D2B1F', margin: '0 auto' }}></div>
+                <h2 style={{ fontSize: '3rem', color: 'var(--primary-brown)', marginBottom: '15px' }}>Meet the Dream Team</h2>
+                <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--primary-brown)', margin: '0 auto' }}></div>
             </div>
 
             <div className="responsive-grid" style={{
@@ -261,8 +261,8 @@ const TeamSection = ({ team = [] }) => {
                         >
                             <img src={member.image_url || member.img} alt={member.stylist_name || member.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </motion.div>
-                        <h3 style={{ fontSize: '2rem', color: '#3D2B1F', marginBottom: '5px' }}>{member.stylist_name || member.name}</h3>
-                        <p style={{ color: '#3D2B1F', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '3px', fontSize: '0.85rem', marginBottom: '20px', opacity: 0.8 }}>{member.role}</p>
+                        <h3 style={{ fontSize: '2rem', color: 'var(--primary-brown)', marginBottom: '5px' }}>{member.stylist_name || member.name}</h3>
+                        <p style={{ color: 'var(--primary-brown)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '3px', fontSize: '0.85rem', marginBottom: '20px', opacity: 0.8 }}>{member.role}</p>
                         <p style={{ color: '#666', lineHeight: '1.8', maxWidth: '320px', margin: '0 auto', fontSize: '1.05rem' }}>{member.description || member.desc}</p>
                     </motion.div>
                 ))}
@@ -355,7 +355,7 @@ const PriceList = ({ pricing = [] }) => {
                 <h2 className="price-list-title" style={{
                     fontFamily: "'Great Vibes', cursive",
                     fontSize: '6rem',
-                    color: '#3D2B1F',
+                    color: 'var(--primary-brown)',
                     textAlign: 'center',
                     marginBottom: '60px',
                     fontWeight: '400',
@@ -376,7 +376,7 @@ const PriceList = ({ pricing = [] }) => {
                                 fontFamily: "'Inter', sans-serif",
                                 fontSize: 'clamp(1.1rem, 3vw, 1.4rem)',
                                 fontWeight: '700',
-                                color: '#3D2B1F',
+                                color: 'var(--primary-brown)',
                                 letterSpacing: '2px',
                                 marginBottom: '20px',
                                 borderBottom: '1px solid rgba(61,43,31,0.1)',
@@ -392,8 +392,8 @@ const PriceList = ({ pricing = [] }) => {
                                         alignItems: 'baseline',
                                         gap: '20px'
                                     }}>
-                                        <span style={{ fontSize: '1rem', color: '#3D2B1F', opacity: 0.8 }}>{item.name}</span>
-                                        <span style={{ fontSize: '1rem', color: '#3D2B1F', fontWeight: '600', whiteSpace: 'nowrap' }}>{item.price}</span>
+                                        <span style={{ fontSize: '1rem', color: 'var(--primary-brown)', opacity: 0.8 }}>{item.name}</span>
+                                        <span style={{ fontSize: '1rem', color: 'var(--primary-brown)', fontWeight: '600', whiteSpace: 'nowrap' }}>{item.price}</span>
                                     </div>
                                 ))}
                             </div>
@@ -427,13 +427,13 @@ const Contact = ({ settings = {} }) => {
     return (
         <section id="contact" style={{
             padding: '120px 20px',
-            backgroundColor: '#3D2B1F',
-            color: '#EAE0D5',
+            backgroundColor: 'var(--primary-brown)',
+            color: 'var(--accent-cream)',
             textAlign: 'center'
         }}>
             <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
                 <h2 style={{ fontSize: 'clamp(2.5rem, 8vw, 4rem)', color: '#FFF', marginBottom: '15px' }}>Contact Us</h2>
-                <div style={{ width: '60px', height: '2px', backgroundColor: '#EAE0D5', margin: '0 auto 40px' }}></div>
+                <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--accent-cream)', margin: '0 auto 40px' }}></div>
 
                 <div className="contact-grid" style={{
                     display: 'grid',
@@ -523,7 +523,7 @@ const ContactCard = ({ icon, label, value, link, isCombined, options }) => {
                 <div style={{
                     display: 'flex',
                     gap: '15px',
-                    color: '#EAE0D5',
+                    color: 'var(--accent-cream)',
                     marginBottom: '15px'
                 }}>
                     <Phone size={24} />
@@ -552,8 +552,8 @@ const ContactCard = ({ icon, label, value, link, isCombined, options }) => {
                                     justifyContent: 'center',
                                     gap: '10px',
                                     padding: '12px',
-                                    backgroundColor: '#EAE0D5',
-                                    color: '#3D2B1F',
+                                    backgroundColor: 'var(--accent-cream)',
+                                    color: 'var(--primary-brown)',
                                     borderRadius: '8px',
                                     textDecoration: 'none',
                                     fontWeight: '600',
@@ -574,7 +574,7 @@ const ContactCard = ({ icon, label, value, link, isCombined, options }) => {
             whileHover={{ y: -5, backgroundColor: 'rgba(234, 224, 213, 0.08)' }}
             style={cardStyle}
         >
-            <div style={{ color: '#EAE0D5', marginBottom: '15px' }}>{icon}</div>
+            <div style={{ color: 'var(--accent-cream)', marginBottom: '15px' }}>{icon}</div>
             <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', opacity: 0.6, marginBottom: '5px' }}>{label}</div>
             <a href={link} target={link.startsWith('http') ? "_blank" : "_self"} rel="noopener noreferrer" style={{ color: '#FFF', fontSize: '1.1rem', fontWeight: '600', textDecoration: 'none', wordBreak: 'break-word' }}>{value}</a>
         </motion.div>
@@ -583,7 +583,7 @@ const ContactCard = ({ icon, label, value, link, isCombined, options }) => {
 
 const Footer = ({ settings = {} }) => {
     return (
-        <footer style={{ padding: '60px 20px', backgroundColor: '#3D2B1F', color: '#EAE0D5', textAlign: 'center' }}>
+        <footer style={{ padding: '60px 20px', backgroundColor: 'var(--primary-brown)', color: 'var(--accent-cream)', textAlign: 'center' }}>
             <div style={{ maxWidth: '1200px', margin: '0 auto', paddingTop: '40px', borderTop: '1px solid rgba(234, 224, 213, 0.1)', opacity: 0.6, fontSize: '0.9rem' }}>
                 &copy; {new Date().getFullYear()} Hair Studio 938. All rights reserved.
             </div>

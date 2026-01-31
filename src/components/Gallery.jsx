@@ -76,7 +76,7 @@ const Gallery = ({ images = [] }) => {
     return (
         <section id="gallery" style={{
             padding: '120px 0',
-            backgroundColor: '#3D2B1F',
+            backgroundColor: 'var(--primary-brown)',
             overflow: 'hidden',
             position: 'relative'
         }}>
@@ -84,10 +84,10 @@ const Gallery = ({ images = [] }) => {
                 <div style={{ textAlign: 'center', marginBottom: '60px' }}>
                     <h2 style={{
                         fontSize: 'clamp(2.5rem, 8vw, 4rem)',
-                        color: '#EAE0D5',
+                        color: 'var(--accent-cream)',
                         marginBottom: '15px'
                     }}>Gallery</h2>
-                    <div style={{ width: '60px', height: '2px', backgroundColor: '#EAE0D5', margin: '0 auto 20px' }}></div>
+                    <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--accent-cream)', margin: '0 auto 20px' }}></div>
                     <a
                         href="https://www.instagram.com/hair.studio938/"
                         target="_blank"
@@ -96,7 +96,7 @@ const Gallery = ({ images = [] }) => {
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '8px',
-                            color: '#EAE0D5',
+                            color: 'var(--accent-cream)',
                             opacity: 0.8,
                             fontSize: '1rem',
                             letterSpacing: '1px'
@@ -163,7 +163,7 @@ const Gallery = ({ images = [] }) => {
                             style={{
                                 backgroundColor: 'rgba(234, 224, 213, 0.2)',
                                 backdropFilter: 'blur(5px)',
-                                color: '#EAE0D5',
+                                color: 'var(--accent-cream)',
                                 width: '50px',
                                 height: '50px',
                                 borderRadius: '50%',
@@ -182,7 +182,7 @@ const Gallery = ({ images = [] }) => {
                             style={{
                                 backgroundColor: 'rgba(234, 224, 213, 0.2)',
                                 backdropFilter: 'blur(5px)',
-                                color: '#EAE0D5',
+                                color: 'var(--accent-cream)',
                                 width: '50px',
                                 height: '50px',
                                 borderRadius: '50%',
@@ -217,7 +217,7 @@ const Gallery = ({ images = [] }) => {
                                 width: idx === currentIndex ? '30px' : '10px',
                                 height: '10px',
                                 borderRadius: '5px',
-                                backgroundColor: idx === currentIndex ? '#EAE0D5' : 'rgba(234, 224, 213, 0.3)',
+                                backgroundColor: idx === currentIndex ? 'var(--accent-cream)' : 'rgba(234, 224, 213, 0.3)',
                                 transition: 'all 0.3s ease'
                             }}
                         />

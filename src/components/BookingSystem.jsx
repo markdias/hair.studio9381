@@ -203,13 +203,13 @@ const BookingSystem = () => {
     return (
         <section id="booking" style={{
             padding: '120px 0',
-            backgroundColor: '#F5F1ED',
+            backgroundColor: 'var(--soft-cream)',
             minHeight: '800px'
         }}>
             <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px' }}>
                 <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-                    <h2 style={{ fontSize: 'clamp(2.5rem, 8vw, 4rem)', color: '#3D2B1F', marginBottom: '15px' }}>Book Your Visit</h2>
-                    <div style={{ width: '60px', height: '2px', backgroundColor: '#3D2B1F', margin: '0 auto' }}></div>
+                    <h2 style={{ fontSize: 'clamp(2.5rem, 8vw, 4rem)', color: 'var(--primary-brown)', marginBottom: '15px' }}>Book Your Visit</h2>
+                    <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--primary-brown)', margin: '0 auto' }}></div>
                 </div>
 
                 <div style={{
@@ -223,9 +223,9 @@ const BookingSystem = () => {
                 }} className="booking-card">
 
                     <div style={{
-                        backgroundColor: '#3D2B1F',
+                        backgroundColor: 'var(--primary-brown)',
                         padding: '60px 40px',
-                        color: '#EAE0D5',
+                        color: 'var(--accent-cream)',
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between'
@@ -241,8 +241,8 @@ const BookingSystem = () => {
                         </div>
                         <div style={{ opacity: 0.6, fontSize: '0.9rem' }}>
                             Step {step} of 4
-                            <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(234, 224, 213, 0.1)', marginTop: '10px', borderRadius: '2px' }}>
-                                <div style={{ width: `${(step / 4) * 100}%`, height: '100%', backgroundColor: '#EAE0D5', transition: 'width 0.5s ease' }}></div>
+                            <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(255, 255, 255, 0.2)', marginTop: '10px', borderRadius: '2px' }}>
+                                <div style={{ width: `${(step / 4) * 100}%`, height: '100%', backgroundColor: 'var(--accent-cream)', transition: 'width 0.5s ease' }}></div>
                             </div>
                         </div>
                     </div>
@@ -251,10 +251,10 @@ const BookingSystem = () => {
                         <AnimatePresence mode="wait">
                             {isSuccess ? (
                                 <motion.div key="success" variants={containerVariants} initial="hidden" animate="visible" style={{ textAlign: 'center', paddingTop: '60px' }}>
-                                    <div style={{ width: '80px', height: '80px', backgroundColor: '#3D2B1F', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 30px' }}>
-                                        <Check color="#EAE0D5" size={40} />
+                                    <div style={{ width: '80px', height: '80px', backgroundColor: 'var(--primary-brown)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 30px' }}>
+                                        <Check color="var(--accent-cream)" size={40} />
                                     </div>
-                                    <h3 style={{ fontSize: '2.5rem', color: '#3D2B1F', marginBottom: '15px' }}>Booking Confirmed!</h3>
+                                    <h3 style={{ fontSize: '2.5rem', color: 'var(--primary-brown)', marginBottom: '15px' }}>Booking Confirmed!</h3>
                                     <p style={{ color: '#666', marginBottom: '40px' }}>We've sent a confirmation email to {booking.email}.</p>
                                     <button
                                         onClick={() => { setIsSuccess(false); setStep(1); setBooking({ stylist: null, service: null, date: null, time: null, duration_minutes: null, name: '', email: '', phone: '' }); }}
@@ -283,15 +283,15 @@ const BookingSystem = () => {
                                                         style={{
                                                             padding: '20px',
                                                             borderRadius: '12px',
-                                                            border: booking.stylist?.name === s.name ? '2px solid #3D2B1F' : '2px solid transparent',
-                                                            backgroundColor: booking.stylist?.name === s.name ? '#F5F1ED' : '#F9F9F9',
+                                                            border: booking.stylist?.name === s.name ? '2px solid var(--primary-brown)' : '2px solid transparent',
+                                                            backgroundColor: booking.stylist?.name === s.name ? 'var(--soft-cream)' : '#F9F9F9',
                                                             transition: 'all 0.3s ease',
                                                             textAlign: 'center',
                                                             cursor: 'pointer'
                                                         }}
                                                     >
                                                         <img src={s.img} alt={s.name} style={{ width: '80px', height: '80px', borderRadius: '50%', marginBottom: '15px', objectFit: 'cover' }} />
-                                                        <div style={{ fontWeight: '700', color: '#3D2B1F' }}>{s.name}</div>
+                                                        <div style={{ fontWeight: '700', color: 'var(--primary-brown)' }}>{s.name}</div>
                                                         <div style={{ fontSize: '0.8rem', color: '#666' }}>{s.role.split(' ')[0]}</div>
                                                     </button>
                                                 ))}
@@ -318,9 +318,9 @@ const BookingSystem = () => {
                                                                     style={{
                                                                         padding: '10px 20px',
                                                                         borderRadius: '30px',
-                                                                        border: '1px solid #EAE0D5',
-                                                                        backgroundColor: booking.service === item ? '#3D2B1F' : 'white',
-                                                                        color: booking.service === item ? '#FFF' : '#3D2B1F',
+                                                                        border: '1px solid var(--accent-cream)',
+                                                                        backgroundColor: booking.service === item ? 'var(--primary-brown)' : 'white',
+                                                                        color: booking.service === item ? '#FFF' : 'var(--primary-brown)',
                                                                         fontSize: '0.9rem',
                                                                         transition: 'all 0.2s ease',
                                                                         cursor: 'pointer',
@@ -352,7 +352,7 @@ const BookingSystem = () => {
                                             <p style={{ color: '#666', marginBottom: '30px', fontSize: '0.9rem' }}>Select your preferred date to see available time slots.</p>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
                                                 <div style={{ position: 'relative' }}>
-                                                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#3D2B1F', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--primary-brown)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
                                                         Pick a Date
                                                     </label>
                                                     <div style={{ position: 'relative' }}>
@@ -366,9 +366,9 @@ const BookingSystem = () => {
                                                                 width: '100%',
                                                                 padding: '15px 15px 15px 45px',
                                                                 borderRadius: '12px',
-                                                                border: '1px solid #EAE0D5',
+                                                                border: '1px solid var(--accent-cream)',
                                                                 fontSize: '1rem',
-                                                                color: '#3D2B1F',
+                                                                color: 'var(--primary-brown)',
                                                                 backgroundColor: '#FFF',
                                                                 cursor: 'pointer',
                                                                 outline: 'none',
@@ -379,7 +379,7 @@ const BookingSystem = () => {
                                                 </div>
 
                                                 <div>
-                                                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#3D2B1F', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--primary-brown)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
                                                         Available Time Slots
                                                     </label>
                                                     {isLoadingSlots ? (
@@ -405,9 +405,9 @@ const BookingSystem = () => {
                                                                         style={{
                                                                             padding: '12px 0',
                                                                             borderRadius: '10px',
-                                                                            border: booking.time === t ? '2px solid #3D2B1F' : '1px solid #EAE0D5',
-                                                                            backgroundColor: booking.time === t ? '#3D2B1F' : 'white',
-                                                                            color: booking.time === t ? '#FFF' : '#3D2B1F',
+                                                                            border: booking.time === t ? '2px solid var(--primary-brown)' : '1px solid var(--accent-cream)',
+                                                                            backgroundColor: booking.time === t ? 'var(--primary-brown)' : 'white',
+                                                                            color: booking.time === t ? '#FFF' : 'var(--primary-brown)',
                                                                             fontWeight: booking.time === t ? '700' : '400',
                                                                             fontSize: '0.9rem',
                                                                             transition: 'all 0.2s ease',
@@ -438,7 +438,7 @@ const BookingSystem = () => {
                                                     <input
                                                         type="text" placeholder="Full Name"
                                                         value={booking.name} onChange={(e) => setBooking({ ...booking, name: e.target.value })}
-                                                        style={{ padding: '15px 15px 15px 45px', width: '100%', border: '1px solid #EAE0D5', borderRadius: '8px', boxSizing: 'border-box', maxWidth: '100%' }}
+                                                        style={{ padding: '15px 15px 15px 45px', width: '100%', border: '1px solid var(--accent-cream)', borderRadius: '8px', boxSizing: 'border-box', maxWidth: '100%' }}
                                                     />
                                                 </div>
                                                 <div style={{ position: 'relative' }}>
@@ -446,7 +446,7 @@ const BookingSystem = () => {
                                                     <input
                                                         type="email" placeholder="Email Address"
                                                         value={booking.email} onChange={(e) => setBooking({ ...booking, email: e.target.value })}
-                                                        style={{ padding: '15px 15px 15px 45px', width: '100%', border: '1px solid #EAE0D5', borderRadius: '8px', boxSizing: 'border-box', maxWidth: '100%' }}
+                                                        style={{ padding: '15px 15px 15px 45px', width: '100%', border: '1px solid var(--accent-cream)', borderRadius: '8px', boxSizing: 'border-box', maxWidth: '100%' }}
                                                     />
                                                 </div>
                                                 <div style={{ position: 'relative' }}>
@@ -454,7 +454,7 @@ const BookingSystem = () => {
                                                     <input
                                                         type="tel" placeholder="Phone Number"
                                                         value={booking.phone} onChange={(e) => setBooking({ ...booking, phone: e.target.value })}
-                                                        style={{ padding: '15px 15px 15px 45px', width: '100%', border: '1px solid #EAE0D5', borderRadius: '8px', boxSizing: 'border-box', maxWidth: '100%' }}
+                                                        style={{ padding: '15px 15px 15px 45px', width: '100%', border: '1px solid var(--accent-cream)', borderRadius: '8px', boxSizing: 'border-box', maxWidth: '100%' }}
                                                     />
                                                 </div>
                                             </div>
@@ -463,7 +463,7 @@ const BookingSystem = () => {
 
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '40px' }}>
                                         {step > 1 && (
-                                            <button onClick={prevStep} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#3D2B1F', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>
+                                            <button onClick={prevStep} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary-brown)', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>
                                                 <ChevronLeft size={20} /> Back
                                             </button>
                                         )}
