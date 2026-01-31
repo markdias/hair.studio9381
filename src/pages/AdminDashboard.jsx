@@ -2524,7 +2524,7 @@ const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment, st
                                     return (
                                         <div
                                             key={i}
-                                            className={`min-h-[60px] border rounded p-1 cursor-pointer transition-colors hover:bg-stone-50 ${isTodayDate ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-200'}`}
+                                            className={`min-h-[100px] border rounded p-1 cursor-pointer transition-colors hover:bg-stone-50 ${isTodayDate ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-200'}`}
                                             onClick={() => onSlotClick(date, hour)}
                                         >
                                             {slotAppts.map(appt => {
@@ -2593,7 +2593,7 @@ const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment, st
                                     {hour}:00
                                 </div>
                                 <div
-                                    className={`flex-1 min-h-[60px] border rounded-lg p-2 cursor-pointer transition-colors hover:bg-stone-50 ${isTodayDate ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-200'}`}
+                                    className={`flex-1 min-h-[100px] border rounded-lg p-2 cursor-pointer transition-colors hover:bg-stone-50 ${isTodayDate ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-200'}`}
                                     onClick={() => onSlotClick(currentDate, hour)}
                                 >
                                     {slotAppts.map(appt => {
