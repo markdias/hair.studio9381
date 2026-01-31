@@ -2300,6 +2300,7 @@ const ClientsTab = ({ clients, setClients, showMessage, refreshClients }) => {
                 <button
                     onClick={() => handleOpenModal()}
                     className="bg-[#3D2B1F] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-opacity-90"
+                    style={{ backgroundColor: "#3D2B1F" }}
                 >
                     <Plus size={18} /> Add Client
                 </button>
