@@ -1729,10 +1729,14 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                                         </div>
                                                     ))
                                                 ) : (
-                                                    <div className="p-3">
+                                                    <div className="p-3 bg-white">
                                                         <button
                                                             type="button"
-                                                            onClick={() => setIsAddingNewClient(true)}
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                setIsAddingNewClient(true);
+                                                            }}
                                                             className="w-full text-sm bg-[#3D2B1F] text-white px-4 py-2.5 rounded-md hover:bg-opacity-90 font-medium flex items-center justify-center gap-2"
                                                         >
                                                             <Plus size={16} />
