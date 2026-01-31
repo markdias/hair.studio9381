@@ -15,6 +15,99 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Date is required' });
     }
 
+    // Check opening hours first
+    try {
+        const { data: settingsData, error: settingsError } = await supabase
+            .from('site_settings')
+            .select('opening_hours')
+            .single();
+
+        if (!settingsError && settingsData?.opening_hours) {
+            const selectedDate = parseISO(date);
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const dayName = dayNames[selectedDate.getDay()];
+
+            // Parse opening hours matching the AdminDashboard format
+            const parseOpeningHours = (text) => {
+                const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                const hours = Array.from({ length: 13 }, (_, i) => i + 8);
+                const selectedSlots = {};
+
+                // Initialize all days as closed
+                days.forEach(day => {
+                    selectedSlots[day] = new Array(13).fill(false);
+                });
+
+                if (!text || text.toLowerCase() === 'closed') return selectedSlots;
+
+                // Parse text - Expected format: "Mon-Fri: 9 AM - 6 PM, Sat: 10 AM - 4 PM"
+                const parts = text.split(',').map(p => p.trim());
+
+                parts.forEach(part => {
+                    const match = part.match(/([A-Za-z\-]+):\s*(.+)/);
+                    if (!match) return;
+
+                    const [, dayPart, timePart] = match;
+                    const timeRanges = timePart.split(',').map(t => t.trim());
+
+                    // Parse day range
+                    let targetDays = [];
+                    if (dayPart.includes('-')) {
+                        const [start, end] = dayPart.split('-').map(d => d.trim());
+                        const startIdx = days.indexOf(start);
+                        const endIdx = days.indexOf(end);
+                        if (startIdx !== -1 && endIdx !== -1) {
+                            for (let i = startIdx; i <= endIdx; i++) {
+                                targetDays.push(days[i]);
+                            }
+                        }
+                    } else {
+                        const day = days.find(d => dayPart.includes(d));
+                        if (day) targetDays.push(day);
+                    }
+
+                    // Parse time ranges
+                    timeRanges.forEach(timeRange => {
+                        const timeMatch = timeRange.match(/(\d+)\s*(AM|PM)\s*-\s*(\d+)\s*(AM|PM)/i);
+                        if (!timeMatch) return;
+
+                        let [, startHour, startPeriod, endHour, endPeriod] = timeMatch;
+                        startHour = parseInt(startHour);
+                        endHour = parseInt(endHour);
+
+                        // Convert to 24-hour
+                        if (startPeriod.toUpperCase() === 'PM' && startHour !== 12) startHour += 12;
+                        if (startPeriod.toUpperCase() === 'AM' && startHour === 12) startHour = 0;
+                        if (endPeriod.toUpperCase() === 'PM' && endHour !== 12) endHour += 12;
+                        if (endPeriod.toUpperCase() === 'AM' && endHour === 12) endHour = 0;
+
+                        // Mark slots as selected
+                        targetDays.forEach(day => {
+                            hours.forEach((hour, idx) => {
+                                if (hour >= startHour && hour < endHour) {
+                                    selectedSlots[day][idx] = true;
+                                }
+                            });
+                        });
+                    });
+                });
+
+                return selectedSlots;
+            };
+
+            const parsedHours = parseOpeningHours(settingsData.opening_hours);
+            const slots = parsedHours[dayName];
+
+            // If salon is closed on this day (no slots or all slots are false), return empty slots
+            if (!slots || !slots.some(s => s)) {
+                return res.status(200).json({ slots: [], closed: true });
+            }
+        }
+    } catch (err) {
+        console.warn('Could not fetch opening hours:', err.message);
+        // Continue anyway if opening hours check fails
+    }
+
     // Check for credentials
     const privateKey = process.env.GOOGLE_PRIVATE_KEY;
     const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;

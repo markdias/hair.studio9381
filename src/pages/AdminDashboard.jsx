@@ -1417,6 +1417,7 @@ const GalleryTab = ({ gallery, refresh, showMessage }) => {
 
 const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, setClients, services, stylists, pricing, openingHours }) => {
     const [loading, setLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false); // Loading state for saving appointments
     const [editingAppt, setEditingAppt] = useState(null);
     const [filterStylist, setFilterStylist] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -1444,6 +1445,16 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
 
     const [timeSlots, setTimeSlots] = useState([]);
     const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+
+    // Check if salon is closed on the selected date
+    const isSalonClosed = React.useMemo(() => {
+        if (!newAppt.date || !openingHours || openingHours === '') return false;
+        const selectedDate = new Date(newAppt.date);
+        const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][selectedDate.getDay()];
+        const parsedHours = parseOpeningHours(openingHours);
+        const slots = parsedHours[dayName];
+        return !slots || !slots.some(s => s); // Closed if no slots or all slots are null
+    }, [newAppt.date, openingHours]);
 
     useEffect(() => {
         if (newAppt.date) {
@@ -1600,6 +1611,7 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
         const startDateTime = new Date(`${newAppt.date}T${newAppt.time}:00`).toISOString();
         const endDateTime = new Date(new Date(`${newAppt.date}T${newAppt.time}:00`).getTime() + duration * 60 * 1000).toISOString();
 
+        setIsSaving(true); // Start loading
         try {
             if (isLocalDev) {
                 // Local: Save to Supabase
@@ -1652,6 +1664,8 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
         } catch (err) {
             console.error('Add appt error:', err);
             showMessage('error', err.message || 'API Error');
+        } finally {
+            setIsSaving(false); // Stop loading
         }
     };
 
@@ -1879,7 +1893,17 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                         </td>
                                     </tr>
                                 ))}
-                                {filteredAppointments.length === 0 && (
+                                {loading && filteredAppointments.length === 0 && (
+                                    <tr>
+                                        <td colSpan="5" className="px-6 py-12 text-center">
+                                            <div className="flex flex-col items-center gap-3">
+                                                <Loader2 size={32} className="animate-spin text-stone-600" />
+                                                <p className="text-gray-500 font-medium">Loading appointments...</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                                {!loading && filteredAppointments.length === 0 && (
                                     <tr>
                                         <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
                                             No appointments found matching your filters.
@@ -2036,6 +2060,13 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                                 value={newAppt.date}
                                                 onChange={(date, dateString) => setNewAppt({ ...newAppt, date: dateString })}
                                                 className=""
+                                                disabledDate={(date) => {
+                                                    const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                                                    const dayName = WEEK_DAYS[date.getDay()];
+                                                    const parsedHours = parseOpeningHours(openingHours);
+                                                    const slots = parsedHours[dayName];
+                                                    return !slots || !slots.some(s => s);
+                                                }}
                                             />
 
 
@@ -2043,6 +2074,10 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                             {isLoadingSlots ? (
                                                 <div className="flex items-center justify-center gap-2 text-sm text-gray-500 py-4">
                                                     <Loader2 size={18} className="animate-spin" /> checking...
+                                                </div>
+                                            ) : isSalonClosed ? (
+                                                <div className="col-span-full text-sm text-center text-red-600 py-4 font-medium bg-red-50 rounded-lg border border-red-200">
+                                                    Salon is closed on this day
                                                 </div>
                                             ) : (
                                                 <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 max-h-48 overflow-y-auto custom-scrollbar">
@@ -2083,11 +2118,180 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                             </div>
                                         )}
                                     </div>
-                                    <button type="submit" className="w-full py-3.5 bg-[#3D2B1F] text-white rounded-lg mt-6 font-bold text-lg shadow-md hover:shadow-lg hover:bg-opacity-95 transition-all transform active:scale-[0.99]" style={{ backgroundColor: '#3D2B1F' }}>
-                                        Confirm Booking
+                                    <button
+                                        type="submit"
+                                        disabled={isSaving}
+                                        className="w-full py-3.5 bg-[#3D2B1F] text-white rounded-lg mt-6 font-bold text-lg shadow-md hover:shadow-lg hover:bg-opacity-95 transition-all transform active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                        style={{ backgroundColor: isSaving ? '#8B7355' : '#3D2B1F' }}
+                                    >
+                                        {isSaving ? (
+                                            <>
+                                                <Loader2 size={20} className="animate-spin" />
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            'Confirm Booking'
+                                        )}
                                     </button>
+
+                                    {/* Existing Appointments for Selected Date */}
+                                    {newAppt.date && (() => {
+                                        const selectedDateAppointments = appointments.filter(appt => {
+                                            const apptDate = new Date(appt.startTime);
+                                            const selectedDate = new Date(newAppt.date);
+                                            return apptDate.toDateString() === selectedDate.toDateString();
+                                        }).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+
+                                        if (selectedDateAppointments.length === 0) return null;
+
+                                        return (
+                                            <div className="mt-6 border-t border-gray-200 pt-6">
+                                                <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                                    <Calendar size={16} />
+                                                    Appointments on {new Date(newAppt.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                                </h4>
+                                                <div className="overflow-x-auto rounded-lg border border-gray-200">
+                                                    <table className="w-full text-sm">
+                                                        <thead className="bg-gray-50 border-b border-gray-200">
+                                                            <tr>
+                                                                <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600">Time</th>
+                                                                <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600">Customer</th>
+                                                                <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600">Service</th>
+                                                                <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600">Stylist</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-gray-100">
+                                                            {selectedDateAppointments.map(appt => {
+                                                                const startTime = new Date(appt.startTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                                                                const endTime = new Date(appt.endTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                                                                const colorClass = STYLIST_COLORS[appt.stylist] || STYLIST_COLORS['default'];
+
+                                                                return (
+                                                                    <tr key={appt.id} className="hover:bg-gray-50">
+                                                                        <td className="px-3 py-2 text-gray-900 font-medium whitespace-nowrap">
+                                                                            {startTime} - {endTime}
+                                                                        </td>
+                                                                        <td className="px-3 py-2 text-gray-700">
+                                                                            {appt.customer.name}
+                                                                        </td>
+                                                                        <td className="px-3 py-2 text-gray-700">
+                                                                            {appt.service}
+                                                                        </td>
+                                                                        <td className="px-3 py-2">
+                                                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${colorClass}`}>
+                                                                                {appt.stylist}
+                                                                            </span>
+                                                                        </td>
+                                                                    </tr>
+                                                                );
+                                                            })}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
                                 </form>
                             )}
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Edit Appointment Modal */}
+            <AnimatePresence>
+                {editingAppt && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-[#3D2B1F] text-[#EAE0D5]">
+                                <h3 className="text-lg font-semibold">Edit Appointment</h3>
+                                <button onClick={() => setEditingAppt(null)}><X size={20} /></button>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
+                                        <input
+                                            type="text"
+                                            value={editingAppt.customer?.name || ''}
+                                            disabled
+                                            className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                        <input
+                                            type="email"
+                                            value={editingAppt.customer?.email || ''}
+                                            disabled
+                                            className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Service</label>
+                                        <input
+                                            type="text"
+                                            value={editingAppt.service || ''}
+                                            disabled
+                                            className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Stylist</label>
+                                        <input
+                                            type="text"
+                                            value={editingAppt.stylist || ''}
+                                            disabled
+                                            className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                                        <input
+                                            type="text"
+                                            value={editingAppt.startTime ? new Date(editingAppt.startTime).toLocaleString() : ''}
+                                            disabled
+                                            className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                                        <input
+                                            type="text"
+                                            value={editingAppt.endTime ? new Date(editingAppt.endTime).toLocaleString() : ''}
+                                            disabled
+                                            className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+                                    <p className="text-sm text-blue-800">
+                                        <strong>Note:</strong> To modify this appointment, please use Google Calendar directly. Changes made there will sync automatically with this system.
+                                    </p>
+                                </div>
+
+                                <div className="flex gap-3 pt-4">
+                                    <button
+                                        onClick={() => setEditingAppt(null)}
+                                        className="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                                    >
+                                        Close
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(editingAppt)}
+                                        className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+                                    >
+                                        Delete Appointment
+                                    </button>
+                                </div>
+                            </div>
                         </motion.div>
                     </div>
                 )}
@@ -2111,7 +2315,7 @@ const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment, st
         return slots ? slots.some(s => s) : true;
     };
 
-    // Helper functions
+    // Helper functions - defined first so getTimeSlots can use them
     const getWeekDays = (date) => {
         const day = date.getDay();
         const diff = date.getDate() - day;
@@ -2144,6 +2348,65 @@ const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment, st
         }
         return days;
     };
+
+    // Calculate time slots based on opening hours for the current view
+    const getTimeSlots = () => {
+        if (!openingHours || openingHours === '') {
+            // Default to 8 AM - 8 PM if no opening hours set
+            return Array.from({ length: 13 }, (_, i) => i + 8);
+        }
+
+        let minHour = 24;
+        let maxHour = 0;
+
+        // Determine which days to check based on view mode
+        let daysToCheck = [];
+        if (calendarViewMode === 'day') {
+            daysToCheck = [currentDate];
+        } else if (calendarViewMode === 'week') {
+            daysToCheck = getWeekDays(currentDate).filter(d => isDayOpen(d));
+        } else {
+            // For month view, check all days in the current month
+            const daysInMonth = getDaysInMonth(currentDate);
+            daysToCheck = daysInMonth.filter(d => d && isDayOpen(d));
+        }
+
+        // Find min and max hours across all relevant days
+        daysToCheck.forEach(date => {
+            if (!date) return;
+            const dayName = WEEK_DAYS[date.getDay()];
+            const slots = parsedOpeningHours[dayName];
+
+            if (slots && slots.some(s => s)) {
+                // Find first true slot (opening time)
+                const firstSlot = slots.findIndex(s => s);
+                if (firstSlot !== -1) {
+                    const hour = firstSlot + 8; // slots array starts at 8 AM
+                    minHour = Math.min(minHour, hour);
+                }
+
+                // Find last true slot (closing time)
+                const lastSlot = slots.length - 1 - [...slots].reverse().findIndex(s => s);
+                if (lastSlot !== -1) {
+                    const hour = lastSlot + 8 + 1; // +1 to include the closing hour
+                    maxHour = Math.max(maxHour, hour);
+                }
+            }
+        });
+
+        // If no valid hours found, use defaults
+        if (minHour === 24 || maxHour === 0) {
+            return Array.from({ length: 13 }, (_, i) => i + 8);
+        }
+
+        // Generate time slots array from min to max hour
+        const length = maxHour - minHour;
+        return Array.from({ length }, (_, i) => i + minHour);
+    };
+
+    const TIME_SLOTS = React.useMemo(() => getTimeSlots(), [openingHours, calendarViewMode, currentDate, parsedOpeningHours]);
+
+
 
     const getAppointmentsForDay = (date) => {
         if (!date) return [];
@@ -2320,7 +2583,7 @@ const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment, st
                                     return (
                                         <div
                                             key={i}
-                                            className={`min-h-[60px] border rounded p-1 cursor-pointer transition-colors hover:bg-stone-50 ${isTodayDate ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-200'}`}
+                                            className={`min-h-[70px] border rounded p-1 cursor-pointer transition-colors hover:bg-stone-50 ${isTodayDate ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-200'}`}
                                             onClick={() => onSlotClick(date, hour)}
                                         >
                                             {slotAppts.map(appt => {
@@ -2367,7 +2630,7 @@ const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment, st
         const isTodayDate = isToday(currentDate);
 
         return (
-            <div className="max-w-2xl mx-auto">
+            <div className="w-full">
                 <div className={`text-center p-4 rounded-lg mb-4 ${isTodayDate ? 'bg-amber-100' : 'bg-gray-50'
                     }`}>
                     <div className="text-sm text-gray-600">{WEEK_DAYS[currentDate.getDay()]}</div>
@@ -2389,7 +2652,7 @@ const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment, st
                                     {hour}:00
                                 </div>
                                 <div
-                                    className={`flex-1 min-h-[60px] border rounded-lg p-2 cursor-pointer transition-colors hover:bg-stone-50 ${isTodayDate ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-200'}`}
+                                    className={`flex-1 min-h-[70px] border rounded-lg p-3 cursor-pointer transition-colors hover:bg-stone-50 ${isTodayDate ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-200'}`}
                                     onClick={() => onSlotClick(currentDate, hour)}
                                 >
                                     {slotAppts.map(appt => {
