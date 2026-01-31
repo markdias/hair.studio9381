@@ -8,9 +8,7 @@ import {
     MapPin, Phone, Mail, Clock, User, Calendar, Edit, X,
     List, ChevronLeft, ChevronRight, Instagram, Facebook, Music2, Maximize2, Search
 } from 'lucide-react';
-import { DatePicker, ConfigProvider } from 'antd';
-import dayjs from 'dayjs';
-import 'antd/dist/reset.css';
+import AntdDatePicker from '../components/AntdDatePicker';
 
 const TABS = [
     { id: 'general', label: 'General Settings', icon: <Settings size={18} /> },
@@ -1757,60 +1755,42 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                     <div className="md:col-span-2 space-y-3 pt-2 border-t border-gray-100">
                                         <label className="block text-sm font-bold text-gray-800">Date & Time</label>
                                         <div className="space-y-4">
-                                        <label className="block text-sm font-bold text-gray-800">Date & Time</label>
-                                        <div className="space-y-4">
-                                            <ConfigProvider
-                                                theme={{
-                                                    token: {
-                                                        colorPrimary: '#3D2B1F',
-                                                        borderRadius: 8,
-                                                    },
-                                                }}
-                                            >
-                                                <DatePicker 
-                                                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm text-base h-12"
-                                                    value={newAppt.date ? dayjs(newAppt.date) : null}
-                                                    onChange={(date, dateString) => setNewAppt({ ...newAppt, date: dateString })}
-                                                    format="YYYY-MM-DD"
-                                                    inputReadOnly={true}
-                                                    allowClear={false}
-                                                    showToday={true}
-                                                    size="large"
-                                                />
-                                            </ConfigProvider>
-                                            
-                                            <div className="relative bg-gray-50 rounded-lg p-3 border border-gray-200">
 
-                                            <div className="relative bg-gray-50 rounded-lg p-3 border border-gray-200">
-                                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Available Slots</label>
-                                                {isLoadingSlots ? (
-                                                    <div className="flex items-center justify-center gap-2 text-sm text-gray-500 py-4">
-                                                        <Loader2 size={18} className="animate-spin" /> checking...
-                                                    </div>
-                                                ) : (
-                                                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 max-h-48 overflow-y-auto custom-scrollbar">
-                                                        {timeSlots.length > 0 ? (
-                                                            timeSlots.map(t => (
-                                                                <button
-                                                                    key={t}
-                                                                    type="button"
-                                                                    onClick={() => setNewAppt({ ...newAppt, time: t })}
-                                                                    className={`px-1 py-2 text-sm rounded-md border transition-all shadow-sm ${newAppt.time === t
-                                                                        ? 'bg-[#3D2B1F] text-white border-[#3D2B1F] font-semibold ring-2 ring-offset-1 ring-[#3D2B1F]'
-                                                                        : 'bg-white text-gray-700 border-gray-200 hover:bg-white hover:border-[#3D2B1F] hover:text-[#3D2B1F]'
-                                                                        }`}
-                                                                >
-                                                                    {t}
-                                                                </button>
-                                                            ))
-                                                        ) : (
-                                                            <div className="col-span-full text-sm text-center text-gray-400 py-4 italic">
-                                                                {newAppt.date ? 'No slots available for this date' : 'Select a date to view slots'}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <AntdDatePicker
+                                                value={newAppt.date}
+                                                onChange={(date, dateString) => setNewAppt({ ...newAppt, date: dateString })}
+                                                className=""
+                                            />
+
+
+                                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Available Slots</label>
+                                            {isLoadingSlots ? (
+                                                <div className="flex items-center justify-center gap-2 text-sm text-gray-500 py-4">
+                                                    <Loader2 size={18} className="animate-spin" /> checking...
+                                                </div>
+                                            ) : (
+                                                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 max-h-48 overflow-y-auto custom-scrollbar">
+                                                    {timeSlots.length > 0 ? (
+                                                        timeSlots.map(t => (
+                                                            <button
+                                                                key={t}
+                                                                type="button"
+                                                                onClick={() => setNewAppt({ ...newAppt, time: t })}
+                                                                className={`px-1 py-2 text-sm rounded-md border transition-all shadow-sm ${newAppt.time === t
+                                                                    ? 'bg-[#3D2B1F] text-white border-[#3D2B1F] font-semibold ring-2 ring-offset-1 ring-[#3D2B1F]'
+                                                                    : 'bg-white text-gray-700 border-gray-200 hover:bg-white hover:border-[#3D2B1F] hover:text-[#3D2B1F]'
+                                                                    }`}
+                                                            >
+                                                                {t}
+                                                            </button>
+                                                        ))
+                                                    ) : (
+                                                        <div className="col-span-full text-sm text-center text-gray-400 py-4 italic">
+                                                            {newAppt.date ? 'No slots available for this date' : 'Select a date to view slots'}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                     <button type="submit" className="w-full py-3.5 bg-[#3D2B1F] text-white rounded-lg mt-6 font-bold text-lg shadow-md hover:shadow-lg hover:bg-opacity-95 transition-all transform active:scale-[0.99]" style={{ backgroundColor: '#3D2B1F' }}>
@@ -1822,7 +1802,7 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                     </div>
                 )}
             </AnimatePresence>
-        </motion.div>
+        </motion.div >
     );
 };
 
@@ -2497,7 +2477,7 @@ const MessagesTab = ({ settings, setSettings, showMessage, refresh }) => {
                                     onClick={() => setShowPreview(!showPreview)}
                                     className="text-xs font-semibold text-stone-800 bg-stone-100 hover:bg-stone-200 px-3 py-1 rounded-full transition-all flex items-center gap-1"
                                 >
-                                    {showPreview ? <><Edit size={12}/> Edit HTML</> : <><Maximize2 size={12}/> Cancel</>}
+                                    {showPreview ? <><Edit size={12} /> Edit HTML</> : <><Maximize2 size={12} /> Cancel</>}
                                 </button>
                             </div>
                         </div>
