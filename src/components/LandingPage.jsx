@@ -60,10 +60,21 @@ const Navbar = ({ settings }) => {
             {/* Desktop Menu */}
             <div className="nav-links" style={{ display: 'flex', gap: '40px', alignItems: 'center', textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '1px', fontWeight: '500' }}>
                 <a href="#home">Home</a>
-                <a href="#services">Services</a>
-                <a href="#team">Team</a>
-                <a href="#pricing">Pricing</a>
-                <a href="#gallery">Gallery</a>
+                {settings.show_services_section !== 'false' && (
+                    <a href="#services">{settings.services_menu_name || 'Services'}</a>
+                )}
+                {settings.show_team_section !== 'false' && (
+                    <a href="#team">{settings.team_menu_name || 'Team'}</a>
+                )}
+                {settings.show_pricing_section !== 'false' && (
+                    <a href="#pricing">{settings.pricing_menu_name || 'Pricing'}</a>
+                )}
+                {settings.show_gallery_section !== 'false' && (
+                    <a href="#gallery">{settings.gallery_menu_name || 'Gallery'}</a>
+                )}
+                {settings.show_testimonials_section === 'true' && (
+                    <a href="#testimonials">{settings.testimonials_menu_name || 'Testimonials'}</a>
+                )}
                 <a href="#contact">Contact</a>
                 <a href="#booking" className="btn-primary" style={{
                     padding: '10px 24px',
@@ -83,10 +94,21 @@ const Navbar = ({ settings }) => {
             {/* Mobile Menu Overlay */}
             <div className="nav-links-mobile">
                 <a href="#home" onClick={toggleMenu}>Home</a>
-                <a href="#services" onClick={toggleMenu}>Services</a>
-                <a href="#team" onClick={toggleMenu}>Team</a>
-                <a href="#pricing" onClick={toggleMenu}>Pricing</a>
-                <a href="#gallery" onClick={toggleMenu}>Gallery</a>
+                {settings.show_services_section !== 'false' && (
+                    <a href="#services" onClick={toggleMenu}>{settings.services_menu_name || 'Services'}</a>
+                )}
+                {settings.show_team_section !== 'false' && (
+                    <a href="#team" onClick={toggleMenu}>{settings.team_menu_name || 'Team'}</a>
+                )}
+                {settings.show_pricing_section !== 'false' && (
+                    <a href="#pricing" onClick={toggleMenu}>{settings.pricing_menu_name || 'Pricing'}</a>
+                )}
+                {settings.show_gallery_section !== 'false' && (
+                    <a href="#gallery" onClick={toggleMenu}>{settings.gallery_menu_name || 'Gallery'}</a>
+                )}
+                {settings.show_testimonials_section === 'true' && (
+                    <a href="#testimonials" onClick={toggleMenu}>{settings.testimonials_menu_name || 'Testimonials'}</a>
+                )}
                 <a href="#contact" onClick={toggleMenu}>Contact</a>
                 <a href="#booking" className="btn-primary" onClick={toggleMenu}>Book Now</a>
             </div>
@@ -185,7 +207,8 @@ const Hero = ({ settings = {} }) => {
     );
 };
 
-const Services = ({ services = [] }) => {
+const Services = ({ services = [], settings = {} }) => {
+    if (settings.show_services_section === 'false') return null;
     const iconMap = {
         Calendar: <Calendar style={{ color: 'var(--primary-brown)' }} />,
         MapPin: <MapPin style={{ color: 'var(--primary-brown)' }} />,
@@ -201,7 +224,9 @@ const Services = ({ services = [] }) => {
     return (
         <section id="services" style={{ padding: '120px 50px', backgroundColor: '#FFFFFF' }}>
             <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-                <h2 style={{ fontSize: '3rem', color: 'var(--primary-brown)', marginBottom: '15px' }}>Our Services</h2>
+                <h2 style={{ fontSize: '3rem', color: 'var(--primary-brown)', marginBottom: '15px' }}>
+                    {settings.services_heading_name || 'Our Services'}
+                </h2>
                 <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--primary-brown)', margin: '0 auto' }}></div>
             </div>
 
@@ -236,7 +261,8 @@ const Services = ({ services = [] }) => {
     );
 };
 
-const TeamSection = ({ team = [] }) => {
+const TeamSection = ({ team = [], settings = {} }) => {
+    if (settings.show_team_section === 'false') return null;
     const defaultTeam = [
         { name: "Jo", role: "Owner & Creative Director", description: "Expert in bespoke coloring and luxury extensions.", image_url: "/jo.png" },
         { name: "Viktor", role: "Master Stylist", description: "Specializing in precision cuts and seamless balayage.", image_url: "/viktor.png" },
@@ -248,7 +274,9 @@ const TeamSection = ({ team = [] }) => {
     return (
         <section id="team" style={{ padding: '120px 50px', backgroundColor: 'var(--soft-cream)' }}>
             <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-                <h2 style={{ fontSize: '3rem', color: 'var(--primary-brown)', marginBottom: '15px' }}>Meet the Dream Team</h2>
+                <h2 style={{ fontSize: '3rem', color: 'var(--primary-brown)', marginBottom: '15px' }}>
+                    {settings.team_heading_name || 'Meet the Dream Team'}
+                </h2>
                 <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--primary-brown)', margin: '0 auto' }}></div>
             </div>
 
@@ -291,7 +319,8 @@ const TeamSection = ({ team = [] }) => {
     );
 };
 
-const PriceList = ({ pricing = [] }) => {
+const PriceList = ({ pricing = [], settings = {} }) => {
+    if (settings.show_pricing_section === 'false') return null;
     // Transform flat pricing list into categories
     const categoriesMap = pricing.reduce((acc, item) => {
         if (!acc[item.category]) acc[item.category] = [];
@@ -381,7 +410,7 @@ const PriceList = ({ pricing = [] }) => {
                     fontWeight: '400',
                     lineHeight: '1'
                 }}>
-                    Price list
+                    {settings.pricing_heading_name || 'Price list'}
                 </h2>
 
                 <div className="pricing-info" style={{
@@ -601,6 +630,64 @@ const ContactCard = ({ icon, label, value, link, isCombined, options }) => {
     );
 };
 
+const Testimonials = ({ testimonials = [], settings = {} }) => {
+    if (settings.show_testimonials_section !== 'true' || testimonials.length === 0) return null;
+
+    return (
+        <section id="testimonials" style={{ padding: '120px 20px', backgroundColor: 'var(--soft-cream)' }}>
+            <div style={{ textAlign: 'center', marginBottom: '80px' }}>
+                <h2 style={{ fontSize: '3rem', color: 'var(--primary-brown)', marginBottom: '15px' }}>
+                    {settings.testimonials_section_name || 'Customer Testimonials'}
+                </h2>
+                <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--primary-brown)', margin: '0 auto' }}></div>
+            </div>
+
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gap: '30px',
+                maxWidth: '1200px',
+                margin: '0 auto'
+            }}>
+                {testimonials.map((t, index) => (
+                    <motion.div
+                        key={t.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        style={{
+                            backgroundColor: '#FFFFFF',
+                            padding: '40px',
+                            borderRadius: '16px',
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.03)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '20px',
+                            border: '1px solid rgba(0,0,0,0.05)'
+                        }}
+                    >
+                        {t.image_url && (
+                            <div style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', margin: '0 auto' }}>
+                                <img src={t.image_url} alt={t.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            </div>
+                        )}
+                        <div style={{ flex: 1 }}>
+                            <p style={{ color: '#444', lineHeight: '1.8', fontStyle: 'italic', fontSize: '1.1rem', textAlign: 'center' }}>
+                                "{t.description}"
+                            </p>
+                        </div>
+                        {t.name && (
+                            <p style={{ color: 'var(--primary-brown)', fontWeight: '700', textAlign: 'center', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                - {t.name}
+                            </p>
+                        )}
+                    </motion.div>
+                ))}
+            </div>
+        </section>
+    );
+};
+
 const Footer = ({ settings = {} }) => {
     return (
         <footer style={{ padding: '60px 20px', backgroundColor: 'var(--primary-brown)', color: 'var(--accent-cream)', textAlign: 'center' }}>
@@ -611,4 +698,4 @@ const Footer = ({ settings = {} }) => {
     );
 };
 
-export { Navbar, Hero, Services, TeamSection, PriceList, Contact, Footer };
+export { Navbar, Hero, Services, TeamSection, PriceList, Testimonials, Contact, Footer };
