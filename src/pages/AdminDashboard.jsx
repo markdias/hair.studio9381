@@ -1188,7 +1188,33 @@ const GeneralTab = ({ settings, setSettings, showMessage }) => {
                                 onUpload={(url) => handleSave('hero_bg_url', url)}
                                 showMessage={showMessage}
                             />
+                            {settings.hero_bg_url && (
+                                <button
+                                    onClick={() => handleSave('hero_bg_url', '')}
+                                    className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-all"
+                                >
+                                    Remove
+                                </button>
+                            )}
                         </div>
+                        <div className="flex gap-3">
+                            <input
+                                type="text"
+                                placeholder="Or paste image URL (e.g., direct image link)"
+                                value={settings.hero_bg_url || ''}
+                                onChange={(e) => setSettings({ ...settings, hero_bg_url: e.target.value })}
+                                className="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none text-sm"
+                            />
+                            <button
+                                onClick={() => handleSave('hero_bg_url', settings.hero_bg_url)}
+                                className="px-4 py-2 bg-stone-800 text-white rounded-lg hover:bg-opacity-90 transition-all" style={{ backgroundColor: "var(--primary-brown)" }}
+                            >
+                                <Save size={18} />
+                            </button>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                            Background image for your website's hero section.
+                        </p>
                         <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-gray-200 bg-stone-50 shadow-sm">
                             {settings.hero_bg_url ? (
                                 <>
