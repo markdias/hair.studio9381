@@ -1674,7 +1674,7 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                     </div>
                                     <div className="flex gap-3 pt-2">
                                         <button onClick={() => setIsAddingNewClient(false)} className="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-                                        <button onClick={handleQuickAddClient} className="flex-1 py-2 bg-[#3D2B1F] text-white rounded-lg hover:bg-opacity-90 font-medium">Save & Select</button>
+                                        <button onClick={handleQuickAddClient} style={{ backgroundColor: '#3D2B1F', color: 'white' }} className="flex-1 py-2 rounded-lg hover:opacity-90 font-medium">Save & Select</button>
                                     </div>
                                 </div>
                             ) : (
@@ -1730,7 +1730,7 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                                     ))
                                                 )}
                                                 {(!filteredClientsSearch || filteredClientsSearch.length === 0) && (
-                                                    <div className="p-3 bg-white">
+                                                    <div className="p-3">
                                                         <button
                                                             type="button"
                                                             onClick={(e) => {
@@ -1738,10 +1738,11 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                                                 e.stopPropagation();
                                                                 setIsAddingNewClient(true);
                                                             }}
-                                                            className="w-full text-sm bg-[#3D2B1F] text-white px-4 py-2.5 rounded-md hover:bg-opacity-90 font-medium flex items-center justify-center gap-2"
+                                                            style={{ backgroundColor: '#3D2B1F', color: 'white' }}
+                                                            className="w-full text-sm px-4 py-3 rounded-lg hover:opacity-90 font-bold flex items-center justify-center gap-2 shadow-sm"
                                                         >
-                                                            <Plus size={16} />
-                                                            Create New Client "{clientSearch}"
+                                                            <Plus size={18} />
+                                                            <span>Create New Client "{clientSearch}"</span>
                                                         </button>
                                                     </div>
                                                 )}
