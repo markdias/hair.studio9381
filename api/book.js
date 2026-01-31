@@ -85,6 +85,25 @@ export default async function handler(req, res) {
 
         console.log(`Creating event: ${service} for ${name} at ${startDateTime}`);
 
+        // 0. UPSERT CLIENT
+        // Check if client exists, if not create, if yes update phone/name
+        try {
+            const { error: clientError } = await supabase
+                .from('clients')
+                .upsert(
+                    { email, name, phone },
+                    { onConflict: 'email', ignoreDuplicates: false }
+                );
+
+            if (clientError) {
+                console.warn('Error upserting client:', clientError.message);
+            } else {
+                console.log('Client record synced for:', email);
+            }
+        } catch (clientErr) {
+            console.warn('Client sync failed:', clientErr.message);
+        }
+
         // 1. Create Google Calendar Event
         const calendarResponse = await calendar.events.insert({
             calendarId: calendarId,

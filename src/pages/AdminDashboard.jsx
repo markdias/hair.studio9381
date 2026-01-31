@@ -16,6 +16,7 @@ const TABS = [
     { id: 'team', label: 'Team', icon: <User size={18} /> },
     { id: 'gallery', label: 'Gallery', icon: <Image size={18} /> },
     { id: 'appointments', label: 'Appointments', icon: <Calendar size={18} /> },
+    { id: 'clients', label: 'Clients', icon: <User size={18} /> }, // Added Clients tab
     { id: 'messages', label: 'Messages', icon: <Mail size={18} /> },
 ];
 
@@ -87,6 +88,7 @@ const AdminDashboard = () => {
     const [stylists, setStylists] = useState([]);
     const [gallery, setGallery] = useState([]);
     const [appointments, setAppointments] = useState([]);
+    const [clients, setClients] = useState([]); // Added clients state
 
     useEffect(() => {
         fetchAllData();
@@ -100,13 +102,15 @@ const AdminDashboard = () => {
                 { data: srvs },
                 { data: prices },
                 { data: stls },
-                { data: gly }
+                { data: gly },
+                { data: clts } // Added clts to fetch
             ] = await Promise.all([
                 supabase.from('site_settings').select('*'),
                 supabase.from('services_overview').select('*'),
                 supabase.from('price_list').select('*').order('sort_order'),
                 supabase.from('stylist_calendars').select('*'),
-                supabase.from('gallery_images').select('*').order('sort_order')
+                supabase.from('gallery_images').select('*').order('sort_order'),
+                supabase.from('clients').select('*').order('created_at', { ascending: false }) // Fetch clients
             ]);
 
             if (settings) {
@@ -119,6 +123,7 @@ const AdminDashboard = () => {
             if (prices) setPricing(prices);
             if (stls) setStylists(stls);
             if (gly) setGallery(gly);
+            if (clts) setClients(clts); // Set clients state
 
         } catch (err) {
             console.error('Error fetching data:', err.message);
@@ -126,6 +131,12 @@ const AdminDashboard = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Refresh clients manually if needed
+    const fetchClients = async () => {
+        const { data, error } = await supabase.from('clients').select('*').order('created_at', { ascending: false });
+        if (data) setClients(data);
     };
 
     const showMessage = (type, text) => {
@@ -148,9 +159,9 @@ const AdminDashboard = () => {
 
 
     return (
-        <div className="min-h-screen bg-gray-50 flex">
+        <div className="flex h-screen bg-stone-50 font-sans text-stone-900">
             {/* Sidebar */}
-            <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm">
+            <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#3D2B1F] text-[#EAE0D5] transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div className="p-6 border-b border-gray-200">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10  rounded-lg flex items-center justify-center" style={{ backgroundColor: "#3D2B1F" }}>
@@ -167,7 +178,7 @@ const AdminDashboard = () => {
                     {TABS.map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
+                            onClick={() => { setActiveTab(tab.id); setSidebarOpen(false); }}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-sm ${activeTab === tab.id
                                 ? 'bg-stone-100 text-stone-800 font-medium'
                                 : 'text-gray-600 hover:bg-gray-50'
@@ -212,10 +223,11 @@ const AdminDashboard = () => {
 
                     <TabContent
                         activeTab={activeTab}
-                        data={{ siteSettings, services, pricing, stylists, gallery, appointments }}
-                        setData={{ setSiteSettings, setServices, setPricing, setStylists, setGallery, setAppointments }}
+                        data={{ siteSettings, services, pricing, stylists, gallery, appointments, clients }} // Pass clients data
+                        setData={{ setSiteSettings, setServices, setPricing, setStylists, setGallery, setAppointments, setClients }} // Pass setClients
                         refresh={fetchAllData}
                         showMessage={showMessage}
+                        fetchClients={fetchClients} // Pass fetchClients
                     />
                 </div>
             </main>
@@ -223,14 +235,15 @@ const AdminDashboard = () => {
     );
 };
 
-const TabContent = ({ activeTab, data, setData, refresh, showMessage }) => {
+const TabContent = ({ activeTab, data, setData, refresh, showMessage, fetchClients }) => {
     switch (activeTab) {
         case 'general': return <GeneralTab settings={data.siteSettings} setSettings={setData.setSiteSettings} showMessage={showMessage} />;
         case 'services': return <ServicesTab services={data.services} refresh={refresh} showMessage={showMessage} />;
-        case 'pricing': return <PricingTab pricing={data.pricing} refresh={refresh} showMessage={showMessage} />;
-        case 'team': return <TeamTab stylists={data.stylists} refresh={refresh} showMessage={showMessage} />;
-        case 'gallery': return <GalleryTab gallery={data.gallery} refresh={refresh} showMessage={showMessage} />;
-        case 'appointments': return <AppointmentsTab appointments={data.appointments} setAppointments={setData.setAppointments} showMessage={showMessage} />;
+        case 'pricing': return <PricingTab pricing={data.pricing} setPricing={setData.setPricing} showMessage={showMessage} />;
+        case 'team': return <StylistsTab stylists={data.stylists} setStylists={setData.setStylists} showMessage={showMessage} />;
+        case 'gallery': return <GalleryTab gallery={data.gallery} setGallery={setData.setGallery} showMessage={showMessage} />;
+        case 'appointments': return <AppointmentsTab appointments={data.appointments} setAppointments={setData.setAppointments} showMessage={showMessage} clients={data.clients} services={data.services} stylists={data.stylists} />;
+        case 'clients': return <ClientsTab clients={data.clients} setClients={setData.setClients} showMessage={showMessage} refreshClients={fetchClients} />;
         case 'messages': return <MessagesTab settings={data.siteSettings} setSettings={setData.setSiteSettings} showMessage={showMessage} refresh={refresh} />;
         default: return null;
     }
@@ -1248,12 +1261,14 @@ const GalleryTab = ({ gallery, refresh, showMessage }) => {
     );
 };
 
-const AppointmentsTab = ({ appointments, setAppointments, showMessage }) => {
+const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, services, stylists }) => {
     const [loading, setLoading] = useState(false);
     const [editingAppt, setEditingAppt] = useState(null);
     const [filterStylist, setFilterStylist] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [newAppt, setNewAppt] = useState({ client_id: '', stylist: '', service: '', date: '', time: '' });
 
     useEffect(() => {
         fetchAppointments();
@@ -1272,6 +1287,40 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage }) => {
             showMessage('error', 'Failed to load appointments');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleAddAppointment = async (e) => {
+        e.preventDefault();
+        const client = clients.find(c => c.id === newAppt.client_id);
+        if (!client) return showMessage('error', 'Select a client first');
+
+        try {
+            const res = await fetch('/api/book', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    stylist: newAppt.stylist,
+                    service: newAppt.service,
+                    date: newAppt.date,
+                    time: newAppt.time,
+                    name: client.name,
+                    email: client.email,
+                    phone: client.phone,
+                    duration_minutes: 60
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showMessage('success', 'Appointment created!');
+                setIsAddModalOpen(false);
+                fetchAppointments();
+                setNewAppt({ client_id: '', stylist: '', service: '', date: '', time: '' });
+            } else {
+                showMessage('error', data.error || 'Failed to create');
+            }
+        } catch (err) {
+            showMessage('error', 'API Error');
         }
     };
 
@@ -1296,6 +1345,7 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage }) => {
         }
     };
 
+    // ... existing handleUpdate ...
     const handleUpdate = async (updatedData) => {
         try {
             const response = await fetch('/api/appointments/update', {
@@ -1328,7 +1378,7 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage }) => {
         return matchesStylist && matchesSearch;
     });
 
-    const stylists = [...new Set(appointments.map(a => a.stylist))];
+    const uniqueStylists = [...new Set(appointments.map(a => a.stylist))];
 
     const formatDateTime = (dateString) => {
         const date = new Date(dateString);
@@ -1353,40 +1403,38 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage }) => {
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4 md:mb-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
                 <h2 className="text-xl md:text-2xl font-semibold text-gray-900">Appointments</h2>
-                <div className="flex items-center gap-2 md:gap-3 w-full sm:w-auto">
+                <div className="flex flex-wrap items-center gap-2">
                     {/* View Toggle */}
-                    <div className="flex bg-gray-100 rounded-lg p-1 flex-1 sm:flex-none">
+                    <div className="flex bg-gray-100 rounded-lg p-1">
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`flex items-center justify-center gap-1 md:gap-2 px-2 md:px-3 py-2 rounded-md transition-all text-xs md:text-sm flex-1 sm:flex-none ${viewMode === 'list'
-                                ? 'bg-white text-stone-800 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900'
-                                }`}
+                            className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md transition-all text-sm ${viewMode === 'list' ? 'bg-white text-stone-800 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
                         >
-                            <List size={16} />
-                            <span className="hidden sm:inline">List</span>
+                            <List size={16} /> List
                         </button>
                         <button
                             onClick={() => setViewMode('calendar')}
-                            className={`flex items-center justify-center gap-1 md:gap-2 px-2 md:px-3 py-2 rounded-md transition-all text-xs md:text-sm flex-1 sm:flex-none ${viewMode === 'calendar'
-                                ? 'bg-white text-stone-800 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900'
-                                }`}
+                            className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md transition-all text-sm ${viewMode === 'calendar' ? 'bg-white text-stone-800 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
                         >
-                            <Calendar size={16} />
-                            <span className="hidden sm:inline">Calendar</span>
+                            <Calendar size={16} /> Calendar
                         </button>
                     </div>
+
+                    <button
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="bg-[#3D2B1F] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-opacity-90"
+                    >
+                        <Plus size={18} /> New Appointment
+                    </button>
+
                     <button
                         onClick={fetchAppointments}
-                        className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 text-white rounded-lg transition-all text-xs md:text-sm"
-                        style={{ backgroundColor: "#3D2B1F" }}
+                        className="flex items-center gap-2 px-3 py-2 bg-stone-100 text-stone-900 rounded-lg hover:bg-stone-200 transition-colors"
                         disabled={loading}
                     >
-                        {loading ? <Loader2 size={16} className="animate-spin" /> : <Calendar size={16} />}
-                        <span className="hidden sm:inline">Refresh</span>
+                        {loading ? <Loader2 size={16} className="animate-spin" /> : <Calendar size={16} />} Refresh
                     </button>
                 </div>
             </div>
@@ -1402,12 +1450,168 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage }) => {
                             className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
                         >
                             <option value="all">All Stylists</option>
-                            {stylists.map(s => (
+                            {uniqueStylists.map(s => (
                                 <option key={s} value={s}>{s}</option>
                             ))}
                         </select>
                     </div>
                     <div>
+                        <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Search Customer</label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                placeholder="Search by name or email..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
+                            />
+                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Content View */}
+            {viewMode === 'list' ? (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm text-gray-600">
+                            <thead className="bg-gray-50 text-gray-900 font-medium border-b border-gray-200">
+                                <tr>
+                                    <th className="px-6 py-3">Date & Time</th>
+                                    <th className="px-6 py-3">Customer</th>
+                                    <th className="px-6 py-3">Service</th>
+                                    <th className="px-6 py-3">Stylist</th>
+                                    <th className="px-6 py-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                                {filteredAppointments.map(appt => (
+                                    <tr key={appt.id} className={`hover:bg-gray-50 transition-colors ${isPast(appt.start) ? 'opacity-60 bg-gray-50' : ''}`}>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="font-medium text-gray-900">{formatDateTime(appt.start)}</span>
+                                                {isToday(appt.start) && <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-full w-fit mt-1">Today</span>}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div>
+                                                <div className="font-medium text-gray-900">{appt.customer.name}</div>
+                                                <div className="text-xs text-gray-500">{appt.customer.email}</div>
+                                                <div className="text-xs text-gray-500">{appt.customer.phone}</div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-stone-100 text-stone-700 font-medium text-xs">
+                                                <Scissors size={12} />
+                                                {appt.service}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium text-xs ${STYLIST_COLORS[appt.stylist] || STYLIST_COLORS['default']}`}>
+                                                <User size={12} />
+                                                {appt.stylist}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => setEditingAppt(appt)}
+                                                    className="p-1 text-gray-500 hover:text-stone-800 hover:bg-stone-100 rounded transition-colors"
+                                                    title="Edit Appointment"
+                                                >
+                                                    <Edit size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(appt)}
+                                                    className="p-1 text-gray-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                                                    title="Delete Appointment"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {filteredAppointments.length === 0 && (
+                                    <tr>
+                                        <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                                            No appointments found matching your filters.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ) : (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 h-[600px] flex items-center justify-center text-gray-500">
+                    <p>Calendar view implementation...</p>
+                    {/* Placeholder for full calendar view */}
+                </div>
+            )}
+
+            {/* Add Appointment Modal */}
+            <AnimatePresence>
+                {isAddModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-[#3D2B1F] text-[#EAE0D5]">
+                                <h3 className="text-lg font-semibold">New Appointment</h3>
+                                <button onClick={() => setIsAddModalOpen(false)}><X size={20} /></button>
+                            </div>
+                            <form onSubmit={handleAddAppointment} className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Select Client</label>
+                                    <select
+                                        className="w-full p-2 border border-gray-300 rounded-lg"
+                                        required
+                                        value={newAppt.client_id}
+                                        onChange={e => setNewAppt({ ...newAppt, client_id: e.target.value })}
+                                    >
+                                        <option value="">-- Choose Client --</option>
+                                        {clients?.map(c => (
+                                            <option key={c.id} value={c.id}>{c.name} ({c.email})</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Stylist</label>
+                                        <select className="w-full p-2 border border-gray-300 rounded-lg" required value={newAppt.stylist} onChange={e => setNewAppt({ ...newAppt, stylist: e.target.value })}>
+                                            <option value="">-- Stylist --</option>
+                                            {stylists?.map(s => <option key={s.id || s} value={s.stylist_name || s.name || s}>{s.stylist_name || s.name || s}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Service</label>
+                                        <select className="w-full p-2 border border-gray-300 rounded-lg" required value={newAppt.service} onChange={e => setNewAppt({ ...newAppt, service: e.target.value })}>
+                                            <option value="">-- Service --</option>
+                                            {services?.map(s => <option key={s.id} value={s.item_name}>{s.item_name}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                                        <input type="date" className="w-full p-2 border border-gray-300 rounded-lg" required value={newAppt.date} onChange={e => setNewAppt({ ...newAppt, date: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                                        <input type="time" className="w-full p-2 border border-gray-300 rounded-lg" required value={newAppt.time} onChange={e => setNewAppt({ ...newAppt, time: e.target.value })} />
+                                    </div>
+                                </div>
+                                <button type="submit" className="w-full py-3 bg-[#3D2B1F] text-white rounded-lg mt-4 font-medium hover:bg-opacity-90">
+                                    Confirm Booking
+                                </button>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </motion.div>
+    );
+};
                         <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Search Customer</label>
                         <input
                             type="text"
@@ -1416,100 +1620,104 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage }) => {
                             placeholder="Name or email..."
                             className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
                         />
-                    </div>
-                </div>
-            </div>
+                    </div >
+                </div >
+            </div >
 
-            {/* Appointments List or Calendar */}
-            {loading ? (
-                <div className="flex items-center justify-center py-12">
-                    <Loader2 size={40} className="animate-spin text-stone-800" />
-                </div>
-            ) : filteredAppointments.length === 0 ? (
-                <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-                    <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-600">No appointments found</p>
-                </div>
-            ) : viewMode === 'calendar' ? (
-                <CalendarView
-                    appointments={filteredAppointments}
-                    onEditAppointment={setEditingAppt}
-                    onDeleteAppointment={handleDelete}
-                />
-            ) : (
-                <div className="space-y-4">
-                    {filteredAppointments.map(appt => (
-                        <div key={appt.id} className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex items-start justify-between">
-                                <div className="flex-grow">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <Clock size={16} className="text-gray-500" />
-                                            <span className="font-semibold text-gray-900">{formatDateTime(appt.startTime)}</span>
-                                        </div>
-                                        {isToday(appt.startTime) && (
-                                            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">Today</span>
-                                        )}
-                                        {isPast(appt.startTime) && !isToday(appt.startTime) && (
-                                            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded">Past</span>
-                                        )}
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                                        <div>
-                                            <p className="text-sm text-gray-500">Customer</p>
-                                            <p className="font-medium text-gray-900">{appt.customer.name}</p>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <Mail size={14} className="text-gray-400" />
-                                                <span className="text-sm text-gray-600">{appt.customer.email}</span>
-                                            </div>
-                                            {appt.customer.phone && (
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <Phone size={14} className="text-gray-400" />
-                                                    <span className="text-sm text-gray-600">{appt.customer.phone}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-gray-500">Service & Stylist</p>
-                                            <p className="font-medium text-gray-900">{appt.customer.service}</p>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <User size={14} className="text-gray-400" />
-                                                <span className="text-sm text-gray-600">{appt.stylist}</span>
-                                            </div>
-                                        </div>
-                                    </div>
+    {/* Appointments List or Calendar */ }
+{
+    loading ? (
+        <div className="flex items-center justify-center py-12">
+            <Loader2 size={40} className="animate-spin text-stone-800" />
+        </div>
+    ) : filteredAppointments.length === 0 ? (
+        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+            <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
+            <p className="text-gray-600">No appointments found</p>
+        </div>
+    ) : viewMode === 'calendar' ? (
+        <CalendarView
+            appointments={filteredAppointments}
+            onEditAppointment={setEditingAppt}
+            onDeleteAppointment={handleDelete}
+        />
+    ) : (
+        <div className="space-y-4">
+            {filteredAppointments.map(appt => (
+                <div key={appt.id} className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                        <div className="flex-grow">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="flex items-center gap-2">
+                                    <Clock size={16} className="text-gray-500" />
+                                    <span className="font-semibold text-gray-900">{formatDateTime(appt.startTime)}</span>
                                 </div>
-                                <div className="flex gap-2 ml-4">
-                                    <button
-                                        onClick={() => setEditingAppt(appt)}
-                                        className="p-2 text-stone-800 hover:bg-stone-100 rounded-lg transition-all"
-                                        title="Edit"
-                                    >
-                                        <Edit size={18} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(appt)}
-                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                        title="Delete"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
+                                {isToday(appt.startTime) && (
+                                    <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">Today</span>
+                                )}
+                                {isPast(appt.startTime) && !isToday(appt.startTime) && (
+                                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded">Past</span>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                <div>
+                                    <p className="text-sm text-gray-500">Customer</p>
+                                    <p className="font-medium text-gray-900">{appt.customer.name}</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <Mail size={14} className="text-gray-400" />
+                                        <span className="text-sm text-gray-600">{appt.customer.email}</span>
+                                    </div>
+                                    {appt.customer.phone && (
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <Phone size={14} className="text-gray-400" />
+                                            <span className="text-sm text-gray-600">{appt.customer.phone}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Service & Stylist</p>
+                                    <p className="font-medium text-gray-900">{appt.customer.service}</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <User size={14} className="text-gray-400" />
+                                        <span className="text-sm text-gray-600">{appt.stylist}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    ))}
+                        <div className="flex gap-2 ml-4">
+                            <button
+                                onClick={() => setEditingAppt(appt)}
+                                className="p-2 text-stone-800 hover:bg-stone-100 rounded-lg transition-all"
+                                title="Edit"
+                            >
+                                <Edit size={18} />
+                            </button>
+                            <button
+                                onClick={() => handleDelete(appt)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                title="Delete"
+                            >
+                                <Trash2 size={18} />
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            )}
+            ))}
+        </div>
+    )
+}
 
-            {/* Edit Modal */}
-            {editingAppt && (
-                <EditAppointmentModal
-                    appointment={editingAppt}
-                    onClose={() => setEditingAppt(null)}
-                    onSave={handleUpdate}
-                />
-            )}
-        </motion.div>
+{/* Edit Modal */ }
+{
+    editingAppt && (
+        <EditAppointmentModal
+            appointment={editingAppt}
+            onClose={() => setEditingAppt(null)}
+            onSave={handleUpdate}
+        />
+    )
+}
+        </motion.div >
     );
 };
 
@@ -2143,3 +2351,154 @@ const MessagesTab = ({ settings, setSettings, showMessage, refresh }) => {
 };
 
 export default AdminDashboard;
+
+// --- CLIENTS TAB COMPONENT ---
+const ClientsTab = ({ clients, setClients, showMessage, refreshClients }) => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingClient, setEditingClient] = useState(null);
+    const [formData, setFormData] = useState({ name: '', email: '', phone: '', notes: '' });
+
+    const filteredClients = clients.filter(c =>
+        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (c.phone && c.phone.includes(searchTerm))
+    );
+
+    const handleOpenModal = (client = null) => {
+        if (client) {
+            setEditingClient(client);
+            setFormData({ name: client.name, email: client.email, phone: client.phone || '', notes: client.notes || '' });
+        } else {
+            setEditingClient(null);
+            setFormData({ name: '', email: '', phone: '', notes: '' });
+        }
+        setIsModalOpen(true);
+    };
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        try {
+            const { error } = await supabase
+                .from('clients')
+                .upsert({
+                    ...(editingClient && { id: editingClient.id }),
+                    ...formData
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            showMessage('success', editingClient ? 'Client updated' : 'Client created');
+            setIsModalOpen(false);
+            refreshClients();
+        } catch (err) {
+            showMessage('error', err.message);
+        }
+    };
+
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                <h2 className="text-2xl font-semibold text-gray-900">Client Management</h2>
+                <button
+                    onClick={() => handleOpenModal()}
+                    className="bg-[#3D2B1F] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-opacity-90 transition-colors"
+                >
+                    <Plus size={18} /> Add Client
+                </button>
+            </div>
+
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
+                    <Search size={18} className="text-gray-400" />
+                    <input
+                        type="text"
+                        placeholder="Search clients..."
+                        className="bg-transparent border-none outline-none text-sm w-full"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm text-gray-600">
+                        <thead className="bg-gray-50 text-gray-900 font-medium border-b border-gray-200">
+                            <tr>
+                                <th className="px-6 py-3">Name</th>
+                                <th className="px-6 py-3">Contact</th>
+                                <th className="px-6 py-3">Notes</th>
+                                <th className="px-6 py-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                            {filteredClients.map(client => (
+                                <tr key={client.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-6 py-4 font-medium text-gray-900">{client.name}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="flex items-center gap-1"><Mail size={12} /> {client.email}</span>
+                                            {client.phone && <span className="flex items-center gap-1"><Phone size={12} /> {client.phone}</span>}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 truncate max-w-xs">{client.notes || '-'}</td>
+                                    <td className="px-6 py-4 text-right">
+                                        <button
+                                            onClick={() => handleOpenModal(client)}
+                                            className="text-[#3D2B1F] hover:underline font-medium"
+                                        >
+                                            Edit
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {filteredClients.length === 0 && (
+                                <tr>
+                                    <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                                        No clients found.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <AnimatePresence>
+                {isModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-[#3D2B1F] text-[#EAE0D5]">
+                                <h3 className="text-lg font-semibold">{editingClient ? 'Edit Client' : 'Add New Client'}</h3>
+                                <button onClick={() => setIsModalOpen(false)}><X size={20} /></button>
+                            </div>
+                            <form onSubmit={handleSave} className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                    <input className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3D2B1F]" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                    <input type="email" className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3D2B1F]" required value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                                    <input type="tel" className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3D2B1F]" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                                    <textarea className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3D2B1F]" rows="3" value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} />
+                                </div>
+                                <div className="flex gap-3 pt-4">
+                                    <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                                    <button type="submit" className="flex-1 py-2 bg-[#3D2B1F] text-white rounded-lg hover:bg-opacity-90">Save Client</button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </motion.div>
+    );
+};
