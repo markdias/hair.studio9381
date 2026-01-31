@@ -60,19 +60,19 @@ const DEFAULT_EMAIL_TEMPLATE = `
     <h2 style="color: #3D2B1F; border-bottom: 2px solid #EAE0D5; padding-bottom: 10px;">Booking Confirmed!</h2>
     <p>Hi {{name}},</p>
     <p>Thank you for choosing Studio 938. Your appointment is officially confirmed.</p>
-    
+
     <div style="background-color: #FDFBF9; padding: 15px; border-radius: 8px; margin: 20px 0;">
         <p style="margin: 5px 0;"><strong>Service:</strong> {{service}}</p>
         <p style="margin: 5px 0;"><strong>Stylist:</strong> {{stylist}}</p>
         <p style="margin: 5px 0;"><strong>Date:</strong> {{date}}</p>
         <p style="margin: 5px 0;"><strong>Time:</strong> {{time}}</p>
     </div>
-    
+
     <p style="font-size: 0.9rem; color: #666;">
         📍 <strong>Location:</strong> {{salon_location}}<br>
         📞 <strong>Phone:</strong> {{salon_phone}}
     </p>
-    
+
     <p style="margin-top: 30px; font-size: 0.8rem; color: #999;">
         Please give us at least 24 hours notice for any cancellations or changes.
     </p>
@@ -2446,7 +2446,7 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                     <button
                                         type="submit"
                                         disabled={isSaving || !editForm.time}
-                                        className="flex-1 py-3 bg-[#3D2B1F] text-white rounded-lg hover:bg-opacity-90 font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-md text-white"
+                                        className="flex-1 py-3 bg-[#3D2B1F] text-white rounded-lg hover:bg-opacity-90 font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-md"
                                         style={{ backgroundColor: "#3D2B1F" }}
                                     >
                                         {isSaving ? (
@@ -2472,7 +2472,7 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                     </div>
                 )}
             </AnimatePresence>
-        </motion.div >
+        </motion.div>
     );
 };
 
@@ -3090,7 +3090,7 @@ const MessagesTab = ({ settings, setSettings, showMessage, refresh }) => {
         }
     }, [settings.email_template, settings.email_subject]);
 
-    // Update contentEditable when template changes (only if not currently editing in it to avoid cursor jumps, 
+    // Update contentEditable when template changes (only if not currently editing in it to avoid cursor jumps,
     // but here we rely on the toggle to switch modes so it's safer)
     useEffect(() => {
         if (contentEditableRef.current && !showHtmlSource) {
