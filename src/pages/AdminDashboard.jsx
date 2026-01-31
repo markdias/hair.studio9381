@@ -243,7 +243,7 @@ const TabContent = ({ activeTab, data, setData, refresh, showMessage, fetchClien
         case 'pricing': return <PricingTab pricing={data.pricing} setPricing={setData.setPricing} showMessage={showMessage} />;
         case 'team': return <TeamTab stylists={data.stylists} refresh={refresh} showMessage={showMessage} />;
         case 'gallery': return <GalleryTab gallery={data.gallery} setGallery={setData.setGallery} showMessage={showMessage} />;
-        case 'appointments': return <AppointmentsTab appointments={data.appointments} setAppointments={setData.setAppointments} showMessage={showMessage} clients={data.clients} services={data.services} stylists={data.stylists} />;
+        case 'appointments': return <AppointmentsTab appointments={data.appointments} setAppointments={setData.setAppointments} showMessage={showMessage} clients={data.clients} services={data.services} stylists={data.stylists} pricing={data.pricing} />;
         case 'clients': return <ClientsTab clients={data.clients} setClients={setData.setClients} showMessage={showMessage} refreshClients={fetchClients} />;
         case 'messages': return <MessagesTab settings={data.siteSettings} setSettings={setData.setSiteSettings} showMessage={showMessage} refresh={refresh} />;
         default: return null;
@@ -1262,14 +1262,20 @@ const GalleryTab = ({ gallery, refresh, showMessage }) => {
     );
 };
 
-const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, services, stylists }) => {
+const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, services, stylists, pricing }) => {
     const [loading, setLoading] = useState(false);
     const [editingAppt, setEditingAppt] = useState(null);
     const [filterStylist, setFilterStylist] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [clientSearch, setClientSearch] = useState(''); // Client search state
     const [newAppt, setNewAppt] = useState({ client_id: '', stylist: '', service: '', date: '', time: '' });
+
+    // Filter clients for search
+    const filteredClientsSearch = clientSearch
+        ? clients?.filter(c => c.name.toLowerCase().includes(clientSearch.toLowerCase()) || c.email.toLowerCase().includes(clientSearch.toLowerCase()))
+        : [];
 
     useEffect(() => {
         fetchAppointments();
@@ -1296,6 +1302,10 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
         const client = clients.find(c => c.id === newAppt.client_id);
         if (!client) return showMessage('error', 'Select a client first');
 
+        // Get duration from selected service in pricing list
+        const selectedPriceItem = pricing?.find(p => p.item_name === newAppt.service);
+        const duration = selectedPriceItem?.duration_minutes || 60;
+
         try {
             const res = await fetch('/api/book', {
                 method: 'POST',
@@ -1308,7 +1318,7 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                     name: client.name,
                     email: client.email,
                     phone: client.phone,
-                    duration_minutes: 60
+                    duration_minutes: duration
                 })
             });
             const data = await res.json();
@@ -1317,6 +1327,7 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                 setIsAddModalOpen(false);
                 fetchAppointments();
                 setNewAppt({ client_id: '', stylist: '', service: '', date: '', time: '' });
+                setClientSearch(''); // Reset search
             } else {
                 showMessage('error', data.error || 'Failed to create');
             }
@@ -1565,19 +1576,48 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                 <button onClick={() => setIsAddModalOpen(false)}><X size={20} /></button>
                             </div>
                             <form onSubmit={handleAddAppointment} className="p-6 space-y-4">
-                                <div>
+                                <div className="relative">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Select Client</label>
-                                    <select
-                                        className="w-full p-2 border border-gray-300 rounded-lg"
-                                        required
-                                        value={newAppt.client_id}
-                                        onChange={e => setNewAppt({ ...newAppt, client_id: e.target.value })}
-                                    >
-                                        <option value="">-- Choose Client --</option>
-                                        {clients?.map(c => (
-                                            <option key={c.id} value={c.id}>{c.name} ({c.email})</option>
-                                        ))}
-                                    </select>
+                                    <input
+                                        type="text"
+                                        placeholder="Search client..."
+                                        value={clients?.find(c => c.id === newAppt.client_id)?.name || clientSearch}
+                                        onChange={(e) => {
+                                            setClientSearch(e.target.value);
+                                            if (newAppt.client_id) setNewAppt({ ...newAppt, client_id: '' }); // Clear selection on edit
+                                        }}
+                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3D2B1F]"
+                                    />
+                                    {clientSearch && !newAppt.client_id && (
+                                        <div className="absolute z-10 w-full bg-white border border-gray-200 mt-1 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                            {filteredClientsSearch?.length > 0 ? (
+                                                filteredClientsSearch.map(c => (
+                                                    <div
+                                                        key={c.id}
+                                                        className="p-2 hover:bg-gray-50 cursor-pointer text-sm"
+                                                        onClick={() => {
+                                                            setNewAppt({ ...newAppt, client_id: c.id });
+                                                            setClientSearch('');
+                                                        }}
+                                                    >
+                                                        <div className="font-medium">{c.name}</div>
+                                                        <div className="text-xs text-gray-500">{c.email}</div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="p-2 text-sm text-gray-500">No clients found</div>
+                                            )}
+                                        </div>
+                                    )}
+                                    {newAppt.client_id && (
+                                        <button
+                                            type="button"
+                                            onClick={() => { setNewAppt({ ...newAppt, client_id: '' }); setClientSearch(''); }}
+                                            className="absolute right-2 top-8 text-gray-400 hover:text-gray-600"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    )}
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
@@ -1591,7 +1631,11 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Service</label>
                                         <select className="w-full p-2 border border-gray-300 rounded-lg" required value={newAppt.service} onChange={e => setNewAppt({ ...newAppt, service: e.target.value })}>
                                             <option value="">-- Service --</option>
-                                            {services?.map(s => <option key={s.id} value={s.item_name}>{s.item_name}</option>)}
+                                            {pricing?.map(p => (
+                                                <option key={p.id} value={p.item_name}>
+                                                    {p.item_name} ({p.duration_minutes || 60}m) - {p.price}
+                                                </option>
+                                            ))}
                                         </select>
                                     </div>
                                 </div>
