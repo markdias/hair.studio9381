@@ -1710,6 +1710,7 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                 if (error) throw error;
 
                 showMessage('success', 'Appointment deleted');
+                setEditingAppt(null);
                 fetchAppointments();
             } else {
                 // Production: Delete from Google Calendar
@@ -1721,6 +1722,7 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
 
                 if (response.ok) {
                     showMessage('success', 'Appointment deleted');
+                    setEditingAppt(null);
                     fetchAppointments();
                 } else {
                     throw new Error('Delete failed');
