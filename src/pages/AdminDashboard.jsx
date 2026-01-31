@@ -2315,6 +2315,40 @@ const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment, st
         return slots ? slots.some(s => s) : true;
     };
 
+    // Helper functions - defined first so getTimeSlots can use them
+    const getWeekDays = (date) => {
+        const day = date.getDay();
+        const diff = date.getDate() - day;
+        const sunday = new Date(date);
+        sunday.setDate(diff);
+
+        const week = [];
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(sunday);
+            d.setDate(sunday.getDate() + i);
+            week.push(d);
+        }
+        return week;
+    };
+
+    const getDaysInMonth = (date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const startingDayOfWeek = firstDay.getDay();
+
+        const days = [];
+        for (let i = 0; i < startingDayOfWeek; i++) {
+            days.push(null);
+        }
+        for (let day = 1; day <= daysInMonth; day++) {
+            days.push(new Date(year, month, day));
+        }
+        return days;
+    };
+
     // Calculate time slots based on opening hours for the current view
     const getTimeSlots = () => {
         if (!openingHours || openingHours === '') {
@@ -2372,39 +2406,7 @@ const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment, st
 
     const TIME_SLOTS = React.useMemo(() => getTimeSlots(), [openingHours, calendarViewMode, currentDate, parsedOpeningHours]);
 
-    // Helper functions
-    const getWeekDays = (date) => {
-        const day = date.getDay();
-        const diff = date.getDate() - day;
-        const sunday = new Date(date);
-        sunday.setDate(diff);
 
-        const week = [];
-        for (let i = 0; i < 7; i++) {
-            const d = new Date(sunday);
-            d.setDate(sunday.getDate() + i);
-            week.push(d);
-        }
-        return week;
-    };
-
-    const getDaysInMonth = (date) => {
-        const year = date.getFullYear();
-        const month = date.getMonth();
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
-        const daysInMonth = lastDay.getDate();
-        const startingDayOfWeek = firstDay.getDay();
-
-        const days = [];
-        for (let i = 0; i < startingDayOfWeek; i++) {
-            days.push(null);
-        }
-        for (let day = 1; day <= daysInMonth; day++) {
-            days.push(new Date(year, month, day));
-        }
-        return days;
-    };
 
     const getAppointmentsForDay = (date) => {
         if (!date) return [];
