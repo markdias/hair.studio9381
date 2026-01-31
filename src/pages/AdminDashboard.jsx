@@ -6,7 +6,7 @@ import {
     Save, LogOut, Check, Info, Loader2,
     Settings, Scissors, Tag, Image, Plus, Trash2,
     MapPin, Phone, Mail, Clock, User, Calendar, Edit, X,
-    List, ChevronLeft, ChevronRight, Instagram, Facebook, Music2, Maximize2
+    List, ChevronLeft, ChevronRight, Instagram, Facebook, Music2, Maximize2, Search
 } from 'lucide-react';
 
 const TABS = [
@@ -79,6 +79,7 @@ const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('general');
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState({ type: '', text: '' });
+    const [sidebarOpen, setSidebarOpen] = useState(false); // Added sidebarOpen state
     const navigate = useNavigate();
 
     // Data States
@@ -161,7 +162,7 @@ const AdminDashboard = () => {
     return (
         <div className="flex h-screen bg-stone-50 font-sans text-stone-900">
             {/* Sidebar */}
-            <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#3D2B1F] text-[#EAE0D5] transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div className="p-6 border-b border-gray-200">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10  rounded-lg flex items-center justify-center" style={{ backgroundColor: "#3D2B1F" }}>
@@ -240,7 +241,7 @@ const TabContent = ({ activeTab, data, setData, refresh, showMessage, fetchClien
         case 'general': return <GeneralTab settings={data.siteSettings} setSettings={setData.setSiteSettings} showMessage={showMessage} />;
         case 'services': return <ServicesTab services={data.services} refresh={refresh} showMessage={showMessage} />;
         case 'pricing': return <PricingTab pricing={data.pricing} setPricing={setData.setPricing} showMessage={showMessage} />;
-        case 'team': return <StylistsTab stylists={data.stylists} setStylists={setData.setStylists} showMessage={showMessage} />;
+        case 'team': return <TeamTab stylists={data.stylists} refresh={refresh} showMessage={showMessage} />;
         case 'gallery': return <GalleryTab gallery={data.gallery} setGallery={setData.setGallery} showMessage={showMessage} />;
         case 'appointments': return <AppointmentsTab appointments={data.appointments} setAppointments={setData.setAppointments} showMessage={showMessage} clients={data.clients} services={data.services} stylists={data.stylists} />;
         case 'clients': return <ClientsTab clients={data.clients} setClients={setData.setClients} showMessage={showMessage} refreshClients={fetchClients} />;
@@ -1612,114 +1613,7 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
         </motion.div>
     );
 };
-                        <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Search Customer</label>
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Name or email..."
-                            className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
-                        />
-                    </div >
-                </div >
-            </div >
 
-    {/* Appointments List or Calendar */ }
-{
-    loading ? (
-        <div className="flex items-center justify-center py-12">
-            <Loader2 size={40} className="animate-spin text-stone-800" />
-        </div>
-    ) : filteredAppointments.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-            <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-600">No appointments found</p>
-        </div>
-    ) : viewMode === 'calendar' ? (
-        <CalendarView
-            appointments={filteredAppointments}
-            onEditAppointment={setEditingAppt}
-            onDeleteAppointment={handleDelete}
-        />
-    ) : (
-        <div className="space-y-4">
-            {filteredAppointments.map(appt => (
-                <div key={appt.id} className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between">
-                        <div className="flex-grow">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="flex items-center gap-2">
-                                    <Clock size={16} className="text-gray-500" />
-                                    <span className="font-semibold text-gray-900">{formatDateTime(appt.startTime)}</span>
-                                </div>
-                                {isToday(appt.startTime) && (
-                                    <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">Today</span>
-                                )}
-                                {isPast(appt.startTime) && !isToday(appt.startTime) && (
-                                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded">Past</span>
-                                )}
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                                <div>
-                                    <p className="text-sm text-gray-500">Customer</p>
-                                    <p className="font-medium text-gray-900">{appt.customer.name}</p>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <Mail size={14} className="text-gray-400" />
-                                        <span className="text-sm text-gray-600">{appt.customer.email}</span>
-                                    </div>
-                                    {appt.customer.phone && (
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <Phone size={14} className="text-gray-400" />
-                                            <span className="text-sm text-gray-600">{appt.customer.phone}</span>
-                                        </div>
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-500">Service & Stylist</p>
-                                    <p className="font-medium text-gray-900">{appt.customer.service}</p>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <User size={14} className="text-gray-400" />
-                                        <span className="text-sm text-gray-600">{appt.stylist}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex gap-2 ml-4">
-                            <button
-                                onClick={() => setEditingAppt(appt)}
-                                className="p-2 text-stone-800 hover:bg-stone-100 rounded-lg transition-all"
-                                title="Edit"
-                            >
-                                <Edit size={18} />
-                            </button>
-                            <button
-                                onClick={() => handleDelete(appt)}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                title="Delete"
-                            >
-                                <Trash2 size={18} />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            ))}
-        </div>
-    )
-}
-
-{/* Edit Modal */ }
-{
-    editingAppt && (
-        <EditAppointmentModal
-            appointment={editingAppt}
-            onClose={() => setEditingAppt(null)}
-            onSave={handleUpdate}
-        />
-    )
-}
-        </motion.div >
-    );
-};
 
 
 const CalendarView = ({ appointments, onEditAppointment, onDeleteAppointment }) => {
