@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import IntroVideo from './components/IntroVideo'
-import { Navbar, Hero, Services, TeamSection, PriceList, Contact, Footer } from './components/LandingPage'
+import { Navbar, Hero, Services, TeamSection, PriceList, Testimonials, Contact, Footer } from './components/LandingPage'
 import Gallery from './components/Gallery'
 import BookingSystem from './components/BookingSystem'
 import { Analytics } from '@vercel/analytics/react'
@@ -41,7 +41,7 @@ const MainSite = () => {
 
   // CMS Data States
   const [siteData, setSiteData] = useState({
-    settings: {}, services: [], pricing: [], team: [], gallery: [], loading: true
+    settings: {}, services: [], pricing: [], team: [], gallery: [], testimonials: [], loading: true
   });
 
   useEffect(() => {
@@ -55,13 +55,15 @@ const MainSite = () => {
         { data: srvs },
         { data: prices },
         { data: stls },
-        { data: gly }
+        { data: gly },
+        { data: tests }
       ] = await Promise.all([
         supabase.from('site_settings').select('*'),
         supabase.from('services_overview').select('*'),
         supabase.from('price_list').select('*').order('sort_order'),
         supabase.from('stylist_calendars').select('*'),
-        supabase.from('gallery_images').select('*').order('sort_order')
+        supabase.from('gallery_images').select('*').order('sort_order'),
+        supabase.from('testimonials').select('*').order('sort_order')
       ]);
 
       const settingsObj = {};
@@ -73,6 +75,7 @@ const MainSite = () => {
         pricing: prices || [],
         team: stls || [],
         gallery: gly || [],
+        testimonials: tests || [],
         loading: false
       });
     } catch (err) {
@@ -99,6 +102,7 @@ const MainSite = () => {
           <Services services={siteData.services} />
           <TeamSection team={siteData.team} />
           <PriceList pricing={siteData.pricing} />
+          <Testimonials testimonials={siteData.testimonials} settings={siteData.settings} />
           <BookingSystem />
           <Gallery images={siteData.gallery} />
           <Contact settings={siteData.settings} />

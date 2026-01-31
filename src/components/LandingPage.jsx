@@ -64,6 +64,7 @@ const Navbar = ({ settings }) => {
                 <a href="#team">Team</a>
                 <a href="#pricing">Pricing</a>
                 <a href="#gallery">Gallery</a>
+                {settings.show_testimonials_section === 'true' && <a href="#testimonials">{settings.testimonials_section_name || 'Testimonials'}</a>}
                 <a href="#contact">Contact</a>
                 <a href="#booking" className="btn-primary" style={{
                     padding: '10px 24px',
@@ -87,6 +88,7 @@ const Navbar = ({ settings }) => {
                 <a href="#team" onClick={toggleMenu}>Team</a>
                 <a href="#pricing" onClick={toggleMenu}>Pricing</a>
                 <a href="#gallery" onClick={toggleMenu}>Gallery</a>
+                {settings.show_testimonials_section === 'true' && <a href="#testimonials" onClick={toggleMenu}>{settings.testimonials_section_name || 'Testimonials'}</a>}
                 <a href="#contact" onClick={toggleMenu}>Contact</a>
                 <a href="#booking" className="btn-primary" onClick={toggleMenu}>Book Now</a>
             </div>
@@ -601,6 +603,64 @@ const ContactCard = ({ icon, label, value, link, isCombined, options }) => {
     );
 };
 
+const Testimonials = ({ testimonials = [], settings = {} }) => {
+    if (settings.show_testimonials_section !== 'true' || testimonials.length === 0) return null;
+
+    return (
+        <section id="testimonials" style={{ padding: '120px 20px', backgroundColor: 'var(--soft-cream)' }}>
+            <div style={{ textAlign: 'center', marginBottom: '80px' }}>
+                <h2 style={{ fontSize: '3rem', color: 'var(--primary-brown)', marginBottom: '15px' }}>
+                    {settings.testimonials_section_name || 'Customer Testimonials'}
+                </h2>
+                <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--primary-brown)', margin: '0 auto' }}></div>
+            </div>
+
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gap: '30px',
+                maxWidth: '1200px',
+                margin: '0 auto'
+            }}>
+                {testimonials.map((t, index) => (
+                    <motion.div
+                        key={t.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        style={{
+                            backgroundColor: '#FFFFFF',
+                            padding: '40px',
+                            borderRadius: '16px',
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.03)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '20px',
+                            border: '1px solid rgba(0,0,0,0.05)'
+                        }}
+                    >
+                        {t.image_url && (
+                            <div style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', margin: '0 auto' }}>
+                                <img src={t.image_url} alt={t.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            </div>
+                        )}
+                        <div style={{ flex: 1 }}>
+                            <p style={{ color: '#444', lineHeight: '1.8', fontStyle: 'italic', fontSize: '1.1rem', textAlign: 'center' }}>
+                                "{t.description}"
+                            </p>
+                        </div>
+                        {t.name && (
+                            <p style={{ color: 'var(--primary-brown)', fontWeight: '700', textAlign: 'center', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                - {t.name}
+                            </p>
+                        )}
+                    </motion.div>
+                ))}
+            </div>
+        </section>
+    );
+};
+
 const Footer = ({ settings = {} }) => {
     return (
         <footer style={{ padding: '60px 20px', backgroundColor: 'var(--primary-brown)', color: 'var(--accent-cream)', textAlign: 'center' }}>
@@ -611,4 +671,4 @@ const Footer = ({ settings = {} }) => {
     );
 };
 
-export { Navbar, Hero, Services, TeamSection, PriceList, Contact, Footer };
+export { Navbar, Hero, Services, TeamSection, PriceList, Testimonials, Contact, Footer };

@@ -6,7 +6,7 @@ import {
     Save, LogOut, Check, Info, Loader2,
     Settings, Scissors, Tag, Image, Plus, Trash2,
     MapPin, Phone, Mail, Clock, User, Calendar, Edit, X,
-    List, ChevronLeft, ChevronRight, Instagram, Facebook, Music2, Maximize2, Search, Palette
+    List, ChevronLeft, ChevronRight, Instagram, Facebook, Music2, Maximize2, Search, Palette, MessageCircle
 } from 'lucide-react';
 import AntdDatePicker from '../components/AntdDatePicker';
 import { useTheme } from '../lib/ThemeContext';
@@ -20,6 +20,7 @@ const TABS = [
     { id: 'gallery', label: 'Gallery', icon: <Image size={18} /> },
     { id: 'appointments', label: 'Appointments', icon: <Calendar size={18} /> },
     { id: 'clients', label: 'Clients', icon: <User size={18} /> }, // Added Clients tab
+    { id: 'testimonials', label: 'Testimonials', icon: <MessageCircle size={18} /> },
     { id: 'messages', label: 'Messages', icon: <Mail size={18} /> },
 ];
 
@@ -93,6 +94,7 @@ const AdminDashboard = () => {
     const [gallery, setGallery] = useState([]);
     const [appointments, setAppointments] = useState([]);
     const [clients, setClients] = useState([]); // Added clients state
+    const [testimonials, setTestimonials] = useState([]);
 
     useEffect(() => {
         fetchAllData();
@@ -107,16 +109,17 @@ const AdminDashboard = () => {
                 { data: prices },
                 { data: stls },
                 { data: gly },
-                { data: clts } // Added clts to fetch
+                { data: clts },
+                { data: tests }
             ] = await Promise.all([
                 supabase.from('site_settings').select('*'),
                 supabase.from('services_overview').select('*'),
                 supabase.from('price_list').select('*').order('sort_order'),
                 supabase.from('stylist_calendars').select('*'),
                 supabase.from('gallery_images').select('*').order('sort_order'),
-                supabase.from('clients').select('*').order('created_at', { ascending: false }) // Fetch clients
+                supabase.from('clients').select('*').order('created_at', { ascending: false }),
+                supabase.from('testimonials').select('*').order('sort_order')
             ]);
-
             if (settings) {
                 const settingsObj = {};
                 settings.forEach(s => settingsObj[s.key] = s.value);
@@ -127,7 +130,8 @@ const AdminDashboard = () => {
             if (prices) setPricing(prices);
             if (stls) setStylists(stls);
             if (gly) setGallery(gly);
-            if (clts) setClients(clts); // Set clients state
+            if (clts) setClients(clts);
+            if (tests) setTestimonials(tests);
 
         } catch (err) {
             console.error('Error fetching data:', err.message);
@@ -227,8 +231,8 @@ const AdminDashboard = () => {
 
                     <TabContent
                         activeTab={activeTab}
-                        data={{ siteSettings, services, pricing, stylists, gallery, appointments, clients }} // Pass clients data
-                        setData={{ setSiteSettings, setServices, setPricing, setStylists, setGallery, setAppointments, setClients }} // Pass setClients
+                        data={{ siteSettings, services, pricing, stylists, gallery, appointments, clients, testimonials }} // Pass clients data
+                        setData={{ setSiteSettings, setServices, setPricing, setStylists, setGallery, setAppointments, setClients, setTestimonials }} // Pass setClients
                         refresh={fetchAllData}
                         showMessage={showMessage}
                         fetchClients={fetchClients} // Pass fetchClients
@@ -249,6 +253,7 @@ const TabContent = ({ activeTab, data, setData, refresh, showMessage, fetchClien
         case 'gallery': return <GalleryTab gallery={data.gallery} setGallery={setData.setGallery} showMessage={showMessage} />;
         case 'appointments': return <AppointmentsTab appointments={data.appointments} setAppointments={setData.setAppointments} setClients={setData.setClients} showMessage={showMessage} clients={data.clients} services={data.services} stylists={data.stylists} pricing={data.pricing} openingHours={data.siteSettings?.opening_hours} />;
         case 'clients': return <ClientsTab clients={data.clients} setClients={setData.setClients} showMessage={showMessage} refreshClients={fetchClients} />;
+        case 'testimonials': return <TestimonialsTab testimonials={data.testimonials} settings={data.siteSettings} setSettings={setData.setSiteSettings} refresh={refresh} showMessage={showMessage} />;
         case 'messages': return <MessagesTab settings={data.siteSettings} setSettings={setData.setSiteSettings} showMessage={showMessage} refresh={refresh} />;
         default: return null;
     }
@@ -3473,4 +3478,235 @@ const ClientsTab = ({ clients, setClients, showMessage, refreshClients }) => {
         </motion.div>
     );
 };
+
+const TestimonialsTab = ({ testimonials, settings, setSettings, refresh, showMessage }) => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingTestimonial, setEditingTestimonial] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({ name: '', description: '', image_url: '' });
+
+    const handleSaveSetting = async (key, value) => {
+        try {
+            const { error } = await supabase.from('site_settings').upsert({ key, value });
+            if (error) throw error;
+            setSettings(prev => ({ ...prev, [key]: value }));
+            showMessage('success', 'Setting updated!');
+        } catch (err) {
+            showMessage('error', err.message);
+        }
+    };
+
+    const handleOpenModal = (testimonial = null) => {
+        if (testimonial) {
+            setEditingTestimonial(testimonial);
+            setFormData({
+                name: testimonial.name || '',
+                description: testimonial.description || '',
+                image_url: testimonial.image_url || ''
+            });
+        } else {
+            setEditingTestimonial(null);
+            setFormData({ name: '', description: '', image_url: '' });
+        }
+        setIsModalOpen(true);
+    };
+
+    const handleSaveTestimonial = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            if (editingTestimonial) {
+                const { error } = await supabase
+                    .from('testimonials')
+                    .update(formData)
+                    .eq('id', editingTestimonial.id);
+                if (error) throw error;
+                showMessage('success', 'Testimonial updated!');
+            } else {
+                const { error } = await supabase
+                    .from('testimonials')
+                    .insert([{ ...formData, sort_order: testimonials.length }]);
+                if (error) throw error;
+                showMessage('success', 'Testimonial added!');
+            }
+            setIsModalOpen(false);
+            refresh();
+        } catch (err) {
+            showMessage('error', err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm('Are you sure you want to delete this testimonial?')) return;
+        try {
+            const { error } = await supabase.from('testimonials').delete().eq('id', id);
+            if (error) throw error;
+            showMessage('success', 'Testimonial deleted!');
+            refresh();
+        } catch (err) {
+            showMessage('error', err.message);
+        }
+    };
+
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+            <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-semibold text-gray-900">Customer Testimonials</h2>
+                <button
+                    onClick={() => handleOpenModal()}
+                    className="flex items-center gap-2 px-4 py-2 bg-stone-800 text-white rounded-lg hover:shadow-md transition-all text-sm font-medium"
+                    style={{ backgroundColor: 'var(--primary-brown)' }}
+                >
+                    <Plus size={18} /> Add Testimonial
+                </button>
+            </div>
+
+            {/* General Settings */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm space-y-4">
+                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Section Configuration</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex items-center justify-between p-4 bg-stone-50 rounded-lg border border-stone-100">
+                        <div>
+                            <p className="font-medium text-gray-900">Show Section</p>
+                            <p className="text-xs text-gray-500">Enable or disable testimonials on the website</p>
+                        </div>
+                        <button
+                            onClick={() => handleSaveSetting('show_testimonials_section', settings.show_testimonials_section === 'true' ? 'false' : 'true')}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.show_testimonials_section === 'true' ? 'bg-green-600' : 'bg-gray-200'}`}
+                        >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.show_testimonials_section === 'true' ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-medium text-gray-500 uppercase">Section Name</label>
+                        <div className="flex gap-2">
+                            <input
+                                value={settings.testimonials_section_name || 'Customer Testimonials'}
+                                onChange={(e) => setSettings(prev => ({ ...prev, testimonials_section_name: e.target.value }))}
+                                onBlur={(e) => handleSaveSetting('testimonials_section_name', e.target.value)}
+                                className="flex-grow px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-stone-800 outline-none"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Testimonials List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {testimonials.map((t) => (
+                    <div key={t.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm flex flex-col">
+                        {t.image_url && (
+                            <div className="h-40 overflow-hidden relative group">
+                                <img src={t.image_url} alt={t.name} className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                            </div>
+                        )}
+                        <div className="p-5 flex-grow">
+                            <p className="text-gray-900 font-semibold mb-1">{t.name || 'Anonymous'}</p>
+                            <p className="text-gray-600 text-sm italic line-clamp-4">"{t.description}"</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
+                            <button onClick={() => handleOpenModal(t)} className="p-2 text-stone-600 hover:bg-stone-100 rounded-lg transition-colors">
+                                <Edit size={16} />
+                            </button>
+                            <button onClick={() => handleDelete(t.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                <Trash2 size={16} />
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <AnimatePresence>
+                {isModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
+                        >
+                            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-[#3D2B1F] text-[#EAE0D5]">
+                                <h3 className="text-lg font-semibold">{editingTestimonial ? 'Edit Testimonial' : 'Add Testimonial'}</h3>
+                                <button onClick={() => setIsModalOpen(false)} className="hover:rotate-90 transition-transform"><X size={20} /></button>
+                            </div>
+
+                            <form onSubmit={handleSaveTestimonial} className="p-6 space-y-5 overflow-y-auto">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase">Client Image (Optional)</label>
+                                    <div className="flex items-center gap-4">
+                                        {formData.image_url && (
+                                            <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0">
+                                                <img src={formData.image_url} alt="Preview" className="w-full h-full object-cover" />
+                                            </div>
+                                        )}
+                                        <div className="flex-grow">
+                                            <ImageUploader
+                                                folder="testimonials"
+                                                onUpload={(url) => setFormData({ ...formData, image_url: url })}
+                                                showMessage={showMessage}
+                                            />
+                                            {formData.image_url && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, image_url: '' })}
+                                                    className="mt-2 text-xs text-red-600 hover:underline"
+                                                >
+                                                    Remove Image
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase">Client Name (Optional)</label>
+                                    <input
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 outline-none text-sm"
+                                        placeholder="e.g. Sarah J."
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase">Review Description</label>
+                                    <textarea
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 outline-none text-sm min-h-[120px]"
+                                        placeholder="Enter the client's testimonial..."
+                                        required
+                                        value={formData.description}
+                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    />
+                                </div>
+
+                                <div className="flex gap-3 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsModalOpen(false)}
+                                        className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-medium"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="flex-1 px-4 py-2 bg-stone-800 text-white rounded-lg hover:shadow-lg transition-all font-medium flex items-center justify-center gap-2"
+                                        style={{ backgroundColor: 'var(--primary-brown)' }}
+                                    >
+                                        {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                        {editingTestimonial ? 'Update' : 'Save'} Testimonial
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </motion.div>
+    );
+};
+
 export default AdminDashboard;
