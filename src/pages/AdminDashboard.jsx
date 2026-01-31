@@ -1338,6 +1338,28 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
         }
     };
 
+    const [isAddingNewClient, setIsAddingNewClient] = useState(false);
+    const [newClientData, setNewClientData] = useState({ name: '', email: '', phone: '' });
+
+    const handleQuickAddClient = async () => {
+        if (!newClientData.name || !newClientData.email) return showMessage('error', 'Name and Email are required');
+
+        try {
+            const { data, error } = await supabase.from('clients').insert([{ ...newClientData }]).select().single();
+            if (error) throw error;
+
+            setClients([...clients, data]); // Optimistic update
+            setNewAppt({ ...newAppt, client_id: data.id }); // Auto-select new client
+            setClientSearch('');
+            setIsAddingNewClient(false);
+            setNewClientData({ name: '', email: '', phone: '' });
+            showMessage('success', 'Client added and selected!');
+        } catch (err) {
+            console.error('Error adding client:', err);
+            showMessage('error', 'Failed to add client');
+        }
+    };
+
     const handleAddAppointment = async (e) => {
         e.preventDefault();
         const client = clients.find(c => c.id === newAppt.client_id);
@@ -1496,12 +1518,12 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
             {/* Filters */}
             <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4 mb-4 md:mb-6 space-y-3 md:space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                    <div>
+                    <div className="flex-1">
                         <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Filter by Stylist</label>
                         <select
                             value={filterStylist}
                             onChange={(e) => setFilterStylist(e.target.value)}
-                            className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
+                            className="w-full px-3 md:px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none h-[42px]"
                         >
                             <option value="all">All Stylists</option>
                             {uniqueStylists.map(s => (
@@ -1509,7 +1531,7 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                             ))}
                         </select>
                     </div>
-                    <div>
+                    <div className="flex-1">
                         <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Search Customer</label>
                         <div className="relative">
                             <input
@@ -1517,7 +1539,7 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                 placeholder="Search by name or email..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
+                                className="w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none h-[42px]"
                             />
                             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         </div>
@@ -1615,113 +1637,159 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                         <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
                             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-[#3D2B1F] text-[#EAE0D5]">
-                                <h3 className="text-lg font-semibold">New Appointment</h3>
-                                <button onClick={() => setIsAddModalOpen(false)}><X size={20} /></button>
+                                <h3 className="text-lg font-semibold">{isAddingNewClient ? 'Add New Client' : 'New Appointment'}</h3>
+                                <button onClick={() => { setIsAddModalOpen(false); setIsAddingNewClient(false); }}><X size={20} /></button>
                             </div>
-                            <form onSubmit={handleAddAppointment} className="p-6 space-y-4">
-                                <div className="relative">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Select Client</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Search client..."
-                                        value={clients?.find(c => c.id === newAppt.client_id)?.name || clientSearch}
-                                        onChange={(e) => {
-                                            setClientSearch(e.target.value);
-                                            if (newAppt.client_id) setNewAppt({ ...newAppt, client_id: '' }); // Clear selection on edit
-                                        }}
-                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3D2B1F]"
-                                    />
-                                    {clientSearch && !newAppt.client_id && (
-                                        <div className="absolute z-10 w-full bg-white border border-gray-200 mt-1 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                                            {filteredClientsSearch?.length > 0 ? (
-                                                filteredClientsSearch.map(c => (
-                                                    <div
-                                                        key={c.id}
-                                                        className="p-2 hover:bg-gray-50 cursor-pointer text-sm"
-                                                        onClick={() => {
-                                                            setNewAppt({ ...newAppt, client_id: c.id });
-                                                            setClientSearch('');
-                                                        }}
-                                                    >
-                                                        <div className="font-medium">{c.name}</div>
-                                                        <div className="text-xs text-gray-500">{c.email}</div>
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <div className="p-2 text-sm text-gray-500">No clients found</div>
-                                            )}
-                                        </div>
-                                    )}
-                                    {newAppt.client_id && (
-                                        <button
-                                            type="button"
-                                            onClick={() => { setNewAppt({ ...newAppt, client_id: '' }); setClientSearch(''); }}
-                                            className="absolute right-2 top-8 text-gray-400 hover:text-gray-600"
-                                        >
-                                            <X size={16} />
-                                        </button>
-                                    )}
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
+                            {isAddingNewClient ? (
+                                <div className="p-6 space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Stylist</label>
-                                        <select className="w-full p-2 border border-gray-300 rounded-lg" required value={newAppt.stylist} onChange={e => setNewAppt({ ...newAppt, stylist: e.target.value })}>
-                                            <option value="">-- Stylist --</option>
-                                            {stylists?.map(s => <option key={s.id || s} value={s.stylist_name || s.name || s}>{s.stylist_name || s.name || s}</option>)}
-                                        </select>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                        <input
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3D2B1F]"
+                                            value={newClientData.name || clientSearch}
+                                            onChange={e => setNewClientData({ ...newClientData, name: e.target.value })}
+                                            placeholder="Jane Doe"
+                                        />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Service</label>
-                                        <select className="w-full p-2 border border-gray-300 rounded-lg" required value={newAppt.service} onChange={e => setNewAppt({ ...newAppt, service: e.target.value })}>
-                                            <option value="">-- Service --</option>
-                                            {pricing?.map(p => (
-                                                <option key={p.id} value={p.item_name}>
-                                                    {p.item_name} ({p.duration_minutes || 60}m) - {p.price}
-                                                </option>
-                                            ))}
-                                        </select>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                        <input
+                                            type="email"
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3D2B1F]"
+                                            value={newClientData.email}
+                                            onChange={e => setNewClientData({ ...newClientData, email: e.target.value })}
+                                            placeholder="jane@example.com"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                                        <input
+                                            type="tel"
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3D2B1F]"
+                                            value={newClientData.phone}
+                                            onChange={e => setNewClientData({ ...newClientData, phone: e.target.value })}
+                                            placeholder="+1 234 567 8900"
+                                        />
+                                    </div>
+                                    <div className="flex gap-3 pt-2">
+                                        <button onClick={() => setIsAddingNewClient(false)} className="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                                        <button onClick={handleQuickAddClient} className="flex-1 py-2 bg-[#3D2B1F] text-white rounded-lg hover:bg-opacity-90">Save & Select</button>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                                        <input type="date" className="w-full p-2 border border-gray-300 rounded-lg" required value={newAppt.date} onChange={e => setNewAppt({ ...newAppt, date: e.target.value })} />
-                                    </div>
+                            ) : (
+                                <form onSubmit={handleAddAppointment} className="p-6 space-y-5">
                                     <div className="relative">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
-                                        {isLoadingSlots ? (
-                                            <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
-                                                <Loader2 size={16} className="animate-spin" /> Checking availability...
-                                            </div>
-                                        ) : (
-                                            <div className="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto custom-scrollbar border border-gray-200 rounded-lg p-2">
-                                                {timeSlots.length > 0 ? (
-                                                    timeSlots.map(t => (
-                                                        <button
-                                                            key={t}
-                                                            type="button"
-                                                            onClick={() => setNewAppt({ ...newAppt, time: t })}
-                                                            className={`px-2 py-1.5 text-xs rounded border transition-all ${newAppt.time === t
-                                                                ? 'bg-[#3D2B1F] text-white border-[#3D2B1F] font-medium'
-                                                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                                                }`}
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Select Client</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Search client..."
+                                            value={clients?.find(c => c.id === newAppt.client_id)?.name || clientSearch}
+                                            onChange={(e) => {
+                                                setClientSearch(e.target.value);
+                                                if (newAppt.client_id) setNewAppt({ ...newAppt, client_id: '' }); // Clear selection on edit
+                                            }}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3D2B1F]"
+                                        />
+                                        {clientSearch && !newAppt.client_id && (
+                                            <div className="absolute z-10 w-full bg-white border border-gray-200 mt-1 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                                {filteredClientsSearch?.length > 0 ? (
+                                                    filteredClientsSearch.map(c => (
+                                                        <div
+                                                            key={c.id}
+                                                            className="p-2 hover:bg-gray-50 cursor-pointer text-sm"
+                                                            onClick={() => {
+                                                                setNewAppt({ ...newAppt, client_id: c.id });
+                                                                setClientSearch('');
+                                                            }}
                                                         >
-                                                            {t}
-                                                        </button>
+                                                            <div className="font-medium">{c.name}</div>
+                                                            <div className="text-xs text-gray-500">{c.email}</div>
+                                                        </div>
                                                     ))
                                                 ) : (
-                                                    <div className="col-span-4 text-xs text-center text-gray-500 py-2 border border-dashed border-gray-300 rounded-lg">
-                                                        {newAppt.date ? 'No slots available' : 'Select a date first'}
+                                                    <div className="p-2 text-sm text-center">
+                                                        <p className="text-gray-500 mb-2">No clients found</p>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setIsAddingNewClient(true)}
+                                                            className="text-xs bg-[#3D2B1F] text-white px-3 py-1.5 rounded-md hover:bg-opacity-90 w-full"
+                                                        >
+                                                            + Add "{clientSearch}"
+                                                        </button>
                                                     </div>
                                                 )}
                                             </div>
                                         )}
+                                        {newAppt.client_id && (
+                                            <button
+                                                type="button"
+                                                onClick={() => { setNewAppt({ ...newAppt, client_id: '' }); setClientSearch(''); }}
+                                                className="absolute right-2 top-8 text-gray-400 hover:text-gray-600"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        )}
                                     </div>
-                                </div>
-                                <button type="submit" className="w-full py-3 bg-[#3D2B1F] text-white rounded-lg mt-4 font-medium hover:bg-opacity-90 transition-colors" style={{ backgroundColor: '#3D2B1F' }}>
-                                    Confirm Booking
-                                </button>
-                            </form>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Stylist</label>
+                                            <select className="w-full p-2 border border-gray-300 rounded-lg" required value={newAppt.stylist} onChange={e => setNewAppt({ ...newAppt, stylist: e.target.value })}>
+                                                <option value="">-- Stylist --</option>
+                                                {stylists?.map(s => <option key={s.id || s} value={s.stylist_name || s.name || s}>{s.stylist_name || s.name || s}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Service</label>
+                                            <select className="w-full p-2 border border-gray-300 rounded-lg" required value={newAppt.service} onChange={e => setNewAppt({ ...newAppt, service: e.target.value })}>
+                                                <option value="">-- Service --</option>
+                                                {pricing?.map(p => (
+                                                    <option key={p.id} value={p.item_name}>
+                                                        {p.item_name} ({p.duration_minutes || 60}m) - {p.price}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                                            <input type="date" className="w-full p-2 border border-gray-300 rounded-lg" required value={newAppt.date} onChange={e => setNewAppt({ ...newAppt, date: e.target.value })} />
+                                        </div>
+                                        <div className="relative">
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                                            {isLoadingSlots ? (
+                                                <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
+                                                    <Loader2 size={16} className="animate-spin" /> Checking availability...
+                                                </div>
+                                            ) : (
+                                                <div className="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto custom-scrollbar border border-gray-200 rounded-lg p-2">
+                                                    {timeSlots.length > 0 ? (
+                                                        timeSlots.map(t => (
+                                                            <button
+                                                                key={t}
+                                                                type="button"
+                                                                onClick={() => setNewAppt({ ...newAppt, time: t })}
+                                                                className={`px-2 py-1.5 text-xs rounded border transition-all ${newAppt.time === t
+                                                                    ? 'bg-[#3D2B1F] text-white border-[#3D2B1F] font-medium'
+                                                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                                                    }`}
+                                                            >
+                                                                {t}
+                                                            </button>
+                                                        ))
+                                                    ) : (
+                                                        <div className="col-span-4 text-xs text-center text-gray-500 py-2 border border-dashed border-gray-300 rounded-lg">
+                                                            {newAppt.date ? 'No slots available' : 'Select a date first'}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <button type="submit" className="w-full py-3 bg-[#3D2B1F] text-white rounded-lg mt-4 font-medium hover:bg-opacity-90 transition-colors" style={{ backgroundColor: '#3D2B1F' }}>
+                                        Confirm Booking
+                                    </button>
+                                </form>
                         </motion.div>
                     </div>
                 )}
