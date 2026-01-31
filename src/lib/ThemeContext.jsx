@@ -9,6 +9,7 @@ export const ThemeProvider = ({ children }) => {
 
     const FACOTRY_THEME = {
         '--primary-brown': '#3D2B1F',
+        '--primary-brown-rgb': '61, 43, 31',
         '--primary-brown-hover': '#4D3B2F',
         '--accent-cream': '#EAE0D5',
         '--soft-cream': '#F5F1ED',
@@ -71,10 +72,25 @@ export const ThemeProvider = ({ children }) => {
         }
     };
 
+    const hexToRgb = (hex) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result
+            ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`
+            : null;
+    };
+
     const applyTheme = (themeSettings) => {
         const root = document.documentElement;
         Object.entries(themeSettings).forEach(([property, value]) => {
             root.style.setProperty(property, value);
+
+            // If we are setting primary brown, also set its RGB counter-part for rgba usage
+            if (property === '--primary-brown') {
+                const rgb = hexToRgb(value);
+                if (rgb) {
+                    root.style.setProperty('--primary-brown-rgb', rgb);
+                }
+            }
         });
     };
 
