@@ -2388,8 +2388,6 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
                                     </div>
                                 </div>
 
-
-
                                 <div className="pt-4 border-t border-gray-100">
                                     <label className="block text-sm font-bold text-gray-800 mb-3">Appointment Date & Time</label>
                                     <div className="space-y-4">
