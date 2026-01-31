@@ -2624,7 +2624,7 @@ const ClientsTab = ({ clients, setClients, showMessage, refreshClients }) => {
                 <h2 className="text-2xl font-semibold text-gray-900">Client Management</h2>
                 <button
                     onClick={() => handleOpenModal()}
-                    className="bg-[#3D2B1F] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-opacity-90"
+                    className="text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:opacity-90 transition-all font-medium"
                     style={{ backgroundColor: "#3D2B1F" }}
                 >
                     <Plus size={18} /> Add Client
@@ -2689,12 +2689,12 @@ const ClientsTab = ({ clients, setClients, showMessage, refreshClients }) => {
             <AnimatePresence>
                 {isModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden">
                             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-[#3D2B1F] text-[#EAE0D5]">
                                 <h3 className="text-lg font-semibold">{editingClient ? 'Edit Client' : 'Add New Client'}</h3>
                                 <button onClick={() => setIsModalOpen(false)}><X size={20} /></button>
                             </div>
-                            <form onSubmit={handleSave} className="p-6 space-y-4">
+                            <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                                     <input className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3D2B1F]" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
@@ -2712,8 +2712,8 @@ const ClientsTab = ({ clients, setClients, showMessage, refreshClients }) => {
                                     <textarea className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3D2B1F]" rows="3" value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} />
                                 </div>
                                 <div className="flex gap-3 pt-4">
-                                    <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-                                    <button type="submit" className="flex-1 py-2 bg-[#3D2B1F] text-white rounded-lg hover:bg-opacity-90">Save Client</button>
+                                    <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all">Cancel</button>
+                                    <button type="submit" className="flex-1 py-2 text-white rounded-lg hover:opacity-90 font-medium transition-all" style={{ backgroundColor: "#3D2B1F" }}>Save Client</button>
                                 </div>
                             </form>
                         </motion.div>
