@@ -1346,18 +1346,46 @@ const AppointmentsTab = ({ appointments, setAppointments, showMessage, clients, 
         if (!newClientData.name || !newClientData.email) return showMessage('error', 'Name and Email are required');
 
         try {
-            const { data, error } = await supabase.from('clients').insert([{ ...newClientData }]).select().single();
-            if (error) throw error;
+            // Check if client with this email already exists
+            const { data: existingClient, error: searchError } = await supabase
+                .from('clients')
+                .select('*')
+                .eq('email', newClientData.email.trim())
+                .maybeSingle();
 
-            setClients([...clients, data]); // Optimistic update
-            setNewAppt({ ...newAppt, client_id: data.id }); // Auto-select new client
+            if (searchError) throw searchError;
+
+            let clientToSelect;
+
+            if (existingClient) {
+                // If exists, use existing one
+                clientToSelect = existingClient;
+                showMessage('info', 'Existing client found and selected');
+            } else {
+                // If not, create new one
+                const { data: newClient, error: insertError } = await supabase
+                    .from('clients')
+                    .insert([{
+                        name: newClientData.name.trim(),
+                        email: newClientData.email.trim().toLowerCase(),
+                        phone: newClientData.phone?.trim()
+                    }])
+                    .select()
+                    .single();
+
+                if (insertError) throw insertError;
+                clientToSelect = newClient;
+                setClients(prev => [newClient, ...prev]); // Update local state
+                showMessage('success', 'Client created and selected!');
+            }
+
+            setNewAppt({ ...newAppt, client_id: clientToSelect.id }); // Auto-select client
             setClientSearch('');
             setIsAddingNewClient(false);
             setNewClientData({ name: '', email: '', phone: '' });
-            showMessage('success', 'Client added and selected!');
         } catch (err) {
             console.error('Error adding client:', err);
-            showMessage('error', 'Failed to add client');
+            showMessage('error', err.message || 'Failed to add client');
         }
     };
 
