@@ -42,7 +42,6 @@ const GENERAL_FIELDS = [
     { key: 'facebook_url', label: 'Facebook URL', icon: <Facebook size={16} /> },
     { key: 'tiktok_url', label: 'TikTok URL', icon: <Music2 size={16} /> },
     { key: 'hero_bg_url', label: 'Hero Background Image URL', icon: <Image size={16} /> },
-    { key: 'intro_video_url', label: 'Intro Video URL', icon: <Image size={16} /> },
 ];
 
 const EMAIL_VARIABLES = [
@@ -304,6 +303,64 @@ const ImageUploader = ({ onUpload, folder = 'general', showMessage }) => {
             >
                 {uploading ? <Loader2 size={16} className="animate-spin" /> : <Image size={16} />}
                 {uploading ? 'Uploading...' : 'Upload Image'}
+            </button>
+        </div>
+    );
+};
+
+const VideoUploader = ({ onUpload, folder = 'videos', showMessage }) => {
+    const [uploading, setUploading] = useState(false);
+
+    const handleUpload = async (e) => {
+        try {
+            setUploading(true);
+            if (!e.target.files || e.target.files.length === 0) return;
+            const file = e.target.files[0];
+
+            // Validate file type
+            if (!file.type.startsWith('video/')) {
+                showMessage('error', 'Please select a valid video file');
+                return;
+            }
+
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random()}.${fileExt}`;
+            const filePath = `${folder}/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('salon-assets')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data } = supabase.storage
+                .from('salon-assets')
+                .getPublicUrl(filePath);
+
+            onUpload(data.publicUrl);
+            showMessage('success', 'Video uploaded successfully!');
+        } catch (error) {
+            showMessage('error', 'Error uploading video: ' + error.message);
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    return (
+        <div className="relative inline-block">
+            <input
+                type="file"
+                accept="video/*"
+                onChange={handleUpload}
+                disabled={uploading}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+            />
+            <button
+                disabled={uploading}
+                className="flex items-center gap-2 px-4 py-2 bg-stone-800 text-white rounded-lg text-sm font-medium hover:bg-opacity-90 disabled:opacity-50 transition-all" style={{ backgroundColor: "#3D2B1F" }}
+            >
+                {uploading ? <Loader2 size={16} className="animate-spin" /> : <Image size={16} />}
+                {uploading ? 'Uploading...' : 'Upload Video'}
             </button>
         </div>
     );
@@ -1117,6 +1174,48 @@ const GeneralTab = ({ settings, setSettings, showMessage }) => {
                     </div>
                 </div>
             </div>
+
+            {/* Intro Video Section - Full Width */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm mb-6">
+                <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <Image size={18} /> Intro Video
+                </h3>
+                <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-4">
+                        <VideoUploader
+                            folder="videos"
+                            onUpload={(url) => handleSave('intro_video_url', url)}
+                            showMessage={showMessage}
+                        />
+                        {settings.intro_video_url && (
+                            <button
+                                onClick={() => handleSave('intro_video_url', '')}
+                                className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-all"
+                            >
+                                Remove Video
+                            </button>
+                        )}
+                    </div>
+                    <p className="text-xs text-gray-500">
+                        Upload a video to play when users first visit your website. If no video is set, visitors go straight to the main site.
+                    </p>
+                    <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-gray-200 bg-stone-50 shadow-sm">
+                        {settings.intro_video_url ? (
+                            <video
+                                src={settings.intro_video_url}
+                                controls
+                                className="w-full h-full object-cover"
+                                style={{ backgroundColor: 'var(--primary-brown)' }}
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                                No video selected
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
 
             {/* Phone Numbers Editor - Full Width */}
             <div className="mb-6">
